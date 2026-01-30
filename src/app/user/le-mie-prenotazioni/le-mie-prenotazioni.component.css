@@ -1,0 +1,87 @@
+/* Nascondi accordion su desktop, mostra tabella */
+@media (min-width: 768px) {
+    #bookingsAccordion {
+        display: none !important;
+    }
+    .table-responsive {
+        display: block !important;
+    }
+}
+
+/* Nascondi tabella su mobile, mostra accordion */
+@media (max-width: 767px) {
+    .table-responsive {
+        display: none !important;
+    }
+    #bookingsAccordion {
+        display: block !important;
+    }
+    
+    .card-header .flex-shrink-0 {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .card-header .flex-shrink-0 .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Stili per gli accordion items */
+.booking-accordion-item {
+    margin-bottom: 0.75rem;
+    border: 1px solid #e9ebec;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.booking-accordion-header {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.booking-accordion-header:hover {
+    background-color: #e9ecef;
+}
+
+.booking-accordion-body {
+    padding: 1rem;
+    background-color: white;
+}
+
+/* Gestione manuale del collapse */
+.collapse {
+    display: none;
+}
+
+.collapse.show {
+    display: block;
+}
+
+.booking-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.booking-info-row:last-child {
+    border-bottom: none;
+}
+
+.booking-info-label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.booking-info-value {
+    text-align: right;
+}

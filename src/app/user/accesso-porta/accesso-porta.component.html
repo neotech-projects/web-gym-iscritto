@@ -1,0 +1,23 @@
+<div class="access-container">
+    <div class="logo-container">
+        <img src="assets/images/logo_investire-removebg-preview.png" alt="Logo Palestra" />
+    </div>
+
+    <div id="statusContent">
+        <span class="status-badge" [ngClass]="badgeClass">
+            <i [class]="'ri-' + (scenario === 0 ? 'check' : 'close') + '-circle-line me-2'"></i>
+            {{ badgeText }}
+        </span>
+        <div>
+            <img [src]="imagePath" [alt]="badgeText" class="door-image" />
+        </div>
+        <div class="status-message">
+            {{ message }}
+        </div>
+    </div>
+
+    <div class="info-text">
+        <i class="ri-qr-code-line me-1"></i>
+        Accesso tramite QR Code
+    </div>
+</div>

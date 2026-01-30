@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="it" data-layout="vertical" data-bs-theme="light" data-layout-width="fluid" data-layout-position="fixed" data-topbar="light" data-sidebar-size="lg" data-layout-style="default" data-sidebar="dark" data-sidebar-image="none" data-preloader="disable">
+<head>
+  <meta charset="utf-8">
+  <title>La Mia Palestra</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta content="Gestione palestra" name="description" />
+  <link rel="shortcut icon" href="assets/images/favicon.ico">
+  
+  <!-- Bootstrap Css -->
+  <link href="assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+  <!-- Icons Css -->
+  <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+  <!-- App Css-->
+  <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
+  <!-- custom Css-->
+  <link href="assets/css/custom.min.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <app-root></app-root>
+  
+  <!-- JAVASCRIPT - Caricati dopo Angular -->
+  <!-- Bootstrap JS da CDN (necessario per modali e dropdown) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+  <!-- Scripts locali -->
+  <script src="assets/js/layout.js" defer></script>
+  <script src="assets/js/plugins.js"></script>
+  <!-- App.js caricato solo dopo che Angular ha renderizzato e gli elementi esistono -->
+  <script>
+    // Intercetta gli errori di app.js per prevenirli completamente senza log
+    window.addEventListener('error', function(e) {
+      // Se l'errore proviene da app.js e riguarda innerHTML su null, lo sopprimiamo silenziosamente
+      if (e.filename && e.filename.includes('app.js') && 
+          e.message && (e.message.includes('innerHTML') || e.message.includes('Cannot set properties of null'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        return true;
+      }
+    }, true);
+    
+    // Funzione per caricare app.js in modo sicuro
+    function loadAppJs() {
+      // Verifica che tutti gli elementi necessari esistano
+      var requiredElements = [
+        '.navbar-menu',
+        '#navbar-nav'
+      ];
+      
+      var allElementsExist = requiredElements.every(function(selector) {
+        return document.querySelector(selector) !== null;
+      });
+      
+      // Se gli elementi esistono, carica app.js
+      if (allElementsExist) {
+        // Verifica che app.js non sia già stato caricato
+        if (!document.querySelector('script[src="assets/js/app.js"]')) {
+          try {
+            var script = document.createElement('script');
+            script.src = 'assets/js/app.js';
+            script.defer = true;
+            document.body.appendChild(script);
+          } catch (e) {
+            // Errore silenzioso
+          }
+        }
+      }
+    }
+    
+    // Prova a caricare app.js quando il DOM è pronto
+    function tryLoadAppJs() {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            loadAppJs();
+          }, 800);
+        });
+      } else {
+        setTimeout(function() {
+          loadAppJs();
+        }, 800);
+      }
+    }
+    
+    // Prova anche quando Angular ha completato il bootstrap
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        loadAppJs();
+      }, 1500);
+    });
+    
+    // Prova anche periodicamente (con limite) per catturare il rendering asincrono
+    var attempts = 0;
+    var maxAttempts = 15;
+    var checkInterval = setInterval(function() {
+      attempts++;
+      var navbarMenu = document.querySelector('.navbar-menu');
+      if (navbarMenu && navbarMenu.innerHTML) {
+        loadAppJs();
+        clearInterval(checkInterval);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+      }
+    }, 300);
+    
+    // Inizializza
+    tryLoadAppJs();
+  </script>
+  <!-- FullCalendar -->
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js' defer></script>
+</body>
+</html>
+

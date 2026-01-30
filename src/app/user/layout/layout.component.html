@@ -1,0 +1,172 @@
+<div id="layout-wrapper">
+    <header id="page-topbar">
+        <div class="layout-width">
+            <div class="navbar-header">
+                <div class="d-flex">
+                    <div class="navbar-brand-box horizontal-logo">
+                        <a routerLink="/dashboard" class="logo logo-dark">
+                            <span class="logo-sm">
+                                <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="22">
+                            </span>
+                            <span class="logo-lg">
+                                <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="17">
+                            </span>
+                        </a>
+                        <a routerLink="/dashboard" class="logo logo-light">
+                            <span class="logo-sm">
+                                <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="22">
+                            </span>
+                            <span class="logo-lg">
+                                <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="17">
+                            </span>
+                        </a>
+                    </div>
+                    <button type="button" 
+                            class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger mobile-menu-toggle" 
+                            id="topnav-hamburger-icon"
+                            (click)="toggleMobileMenu($event); $event.stopPropagation();"
+                            [attr.aria-expanded]="isMenuOpen"
+                            style="z-index: 1002; position: relative; cursor: pointer;">
+                        <span class="hamburger-icon">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </button>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
+                        <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="page-header-notifications-dropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                            <i class='bx bx-bell fs-22'></i>
+                            <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">1</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" aria-labelledby="page-header-notifications-dropdown" data-bs-popper="static">
+                            <div class="dropdown-head bg-secondary bg-pattern rounded-top">
+                                <div class="p-3">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <h6 class="m-0 fs-16 fw-semibold text-white">Notifiche</h6>
+                                        </div>
+                                        <div class="col-auto dropdown-tabs">
+                                            <span class="badge bg-light-subtle text-body fs-13">1 Nuova</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-simplebar style="max-height: 300px;" class="pe-2">
+                                <div class="text-reset notification-item d-block dropdown-item position-relative">
+                                    <div class="d-flex">
+                                        <div class="avatar-xs me-3 flex-shrink-0">
+                                            <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-16">
+                                                <i class='bx bx-time'></i>
+                                            </span>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mt-0 mb-2 lh-base">Promemoria: Prenotazione domani alle 10:00</h6>
+                                            <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
+                                                <span><i class="mdi mdi-clock-outline"></i> 2 ore fa</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropdown ms-sm-3 header-item topbar-user">
+                        <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                            <span class="d-flex align-items-center">
+                                <span class="text-start">
+                                    <span class="d-none d-xl-inline-block ms-1 fw-semibold user-name-text">{{ userName }}</span>
+                                    <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Utente</span>
+                                </span>
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="page-header-user-dropdown">
+                            <h6 class="dropdown-header">Benvenuto {{ userName }}!</h6>
+                            <a class="dropdown-item" routerLink="/profilo-utente">
+                                <i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> 
+                                <span class="align-middle">Il Mio Profilo</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" (click)="logout()" style="cursor: pointer;">
+                                <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> 
+                                <span class="align-middle">Esci</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-menu navbar-menu" [class.menu-open]="isMenuOpen">
+        <div class="navbar-brand-box">
+            <a routerLink="/dashboard" class="logo logo-dark">
+                <span class="logo-sm">
+                    <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="22">
+                </span>
+                <span class="logo-lg">
+                    <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="17">
+                </span>
+            </a>
+            <a routerLink="/dashboard" class="logo logo-light">
+                <span class="logo-sm">
+                    <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="22">
+                </span>
+                <span class="logo-lg">
+                    <img src="assets/images/logo-investire-bianco-removebg-preview.png" alt="Investire" height="17">
+                </span>
+            </a>
+        </div>
+        <div id="scrollbar">
+            <div class="container-fluid">
+                <ul class="navbar-nav" id="navbar-nav">
+                    <li class="menu-title"><span>Menu</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" routerLink="/dashboard" routerLinkActive="active">
+                            <i class="ri-dashboard-2-line"></i> <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" routerLink="/prenota" routerLinkActive="active">
+                            <i class="ri-calendar-check-line"></i> <span>Prenota</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" routerLink="/le-mie-prenotazioni" routerLinkActive="active">
+                            <i class="ri-calendar-line"></i> <span>Le Mie Prenotazioni</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" routerLink="/profilo-utente" routerLinkActive="active">
+                            <i class="ri-user-line"></i> <span>Il Mio Profilo</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-background"></div>
+    </div>
+
+    <div class="vertical-overlay" 
+         (click)="closeMobileMenu()"
+         [style.display]="isMenuOpen ? 'block' : 'none'"></div>
+
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <router-outlet></router-outlet>
+            </div>
+        </div>
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-sm-6">
+                        {{ currentYear }} © Palestra.
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+

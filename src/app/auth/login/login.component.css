@@ -1,0 +1,127 @@
+/* Stili specifici per il componente login se necessario */
+
+/* Rimuove completamente lo sfondo bianco dal logo per preservare la trasparenza */
+.logo-link {
+    background: transparent !important;
+    background-color: transparent !important;
+    display: inline-block;
+    padding: 0;
+    border: none;
+}
+
+.logo-img {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    display: block;
+}
+
+/* Assicura che il container non aggiunga sfondi */
+.auth-one-bg .mb-4 {
+    background: transparent !important;
+}
+
+.auth-one-bg .mb-4 * {
+    background: transparent !important;
+}
+
+/* Layout wrapper per gestire il footer correttamente */
+.auth-page-content-wrapper {
+    position: relative;
+}
+
+/* Stili responsive per mobile */
+@media (max-width: 991.98px) {
+    .auth-page-content-wrapper {
+        min-height: 100vh;
+    }
+    
+    .auth-page-content {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    .auth-page-wrapper .footer {
+        position: relative !important;
+        right: auto !important;
+        left: auto !important;
+        width: 100% !important;
+        margin-top: 2rem;
+        padding: 1.5rem 0 !important;
+        background-color: transparent !important;
+    }
+    
+    .auth-page-wrapper .footer .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .auth-page-wrapper .footer .text-center {
+        text-align: center !important;
+    }
+}
+
+/* Stili per schermi molto piccoli */
+@media (max-width: 575.98px) {
+    .auth-page-content {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    .auth-page-wrapper .footer {
+        margin-top: 1.5rem;
+        padding: 1rem 0 !important;
+    }
+}
+
+/* Fix per il carousel delle slide - evita il rimpicciolimento durante lo scorrimento */
+#qoutescarouselIndicators {
+    height: 140px;
+    overflow: hidden;
+}
+
+#qoutescarouselIndicators .carousel-inner {
+    height: 140px;
+    padding-bottom: 0 !important;
+}
+
+#qoutescarouselIndicators .carousel-item {
+    height: 140px;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+#qoutescarouselIndicators .carousel-item p {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Assicura che il container padre non si ridimensioni */
+.auth-one-bg .mt-auto {
+    flex-shrink: 0;
+}
+
+/* Media query per mobile */
+@media (max-width: 991.98px) {
+    #qoutescarouselIndicators {
+        height: 120px;
+    }
+    
+    #qoutescarouselIndicators .carousel-inner {
+        height: 120px;
+    }
+    
+    #qoutescarouselIndicators .carousel-item {
+        height: 120px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+

@@ -1,0 +1,322 @@
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0">Il Mio Profilo</h4>
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a routerLink="/dashboard">Home</a></li>
+                    <li class="breadcrumb-item active">Profilo</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs-custom rounded card-header-tabs border-bottom-0" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link" [class.active]="activeTab === 'personal'" (click)="setActiveTab('personal'); $event.preventDefault()" role="tab" style="cursor: pointer;">
+                            <i class="ri-user-line me-1 align-bottom"></i> 
+                            <span class="tab-text-full">Dati Personali</span>
+                            <span class="tab-text-mobile">Dati Pers.</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" [class.active]="activeTab === 'password'" (click)="setActiveTab('password'); $event.preventDefault()" role="tab" style="cursor: pointer;">
+                            <i class="ri-lock-line me-1 align-bottom"></i> 
+                            <span class="tab-text-full">Cambia Password</span>
+                            <span class="tab-text-mobile">Password</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" [class.active]="activeTab === 'activity'" (click)="setActiveTab('activity'); $event.preventDefault()" role="tab" style="cursor: pointer;">
+                            <i class="ri-history-line me-1 align-bottom"></i> 
+                            <span class="tab-text-full">Attività Recenti</span>
+                            <span class="tab-text-mobile">Attività</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane" [class.active]="activeTab === 'personal'" id="personalDetails" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="displayFirstname" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="displayFirstname" [value]="user?.nome" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="displayLastname" class="form-label">Cognome</label>
+                                    <input type="text" class="form-control" id="displayLastname" [value]="user?.cognome" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="displayEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="displayEmail" [value]="user?.email" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="displayPhone" class="form-label">Telefono</label>
+                                    <input type="text" class="form-control" id="displayPhone" [value]="profiloUtente?.telefono || profileData.telefono" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="displayBirthdate" class="form-label">Data di Nascita</label>
+                                    <input type="text" class="form-control" id="displayBirthdate" [value]="profileData.dataNascita" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="mb-3">
+                                    <label for="displayGender" class="form-label">Sesso</label>
+                                    <input type="text" class="form-control" id="displayGender" [value]="profiloUtente?.sesso || profileData.sesso" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="mb-3">
+                                    <label for="displaySocieta" class="form-label">Società</label>
+                                    <input type="text" class="form-control" id="displaySocieta" [value]="profiloUtente?.societa || user?.societa || profileData.societa" disabled>
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal" (click)="loadModalData()">
+                                        <i class="ri-edit-line me-1"></i> Modifica
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" [class.active]="activeTab === 'password'" id="changePassword" role="tabpanel">
+                        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+                            <div class="row g-2">
+                                <div class="col-lg-12">
+                                    <div class="mb-3">
+                                        <label for="oldpasswordInput" class="form-label">Vecchia Password*</label>
+                                        <input type="password" class="form-control" id="oldpasswordInput" formControlName="oldPassword" placeholder="Inserisci la vecchia password">
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="mb-3">
+                                        <label for="newpasswordInput" class="form-label">Nuova Password*</label>
+                                        <input type="password" class="form-control" id="newpasswordInput" formControlName="newPassword" placeholder="Inserisci la nuova password">
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="mb-3">
+                                        <label for="confirmpasswordInput" class="form-label">Conferma Password*</label>
+                                        <input type="password" class="form-control" id="confirmpasswordInput" formControlName="confirmPassword" placeholder="Conferma la nuova password">
+                                    </div>
+                                </div>
+                                <div class="col-lg-12">
+                                    <div class="mb-3">
+                                        <div class="alert alert-warning alert-border-left" role="alert">
+                                            <i class="ri-alert-line me-3 align-middle fs-16"></i><strong>Requisiti Password</strong>
+                                            <ul class="mb-0 mt-2">
+                                                <li>Minimo 8 caratteri</li>
+                                                <li>Almeno una lettera maiuscola</li>
+                                                <li>Almeno un numero</li>
+                                                <li>Almeno un carattere speciale (!&#64;#$%^&amp;*)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12">
+                                    <div class="text-end">
+                                        <button type="button" class="btn btn-soft-secondary" (click)="passwordForm.reset()">Annulla</button>
+                                        <button type="submit" class="btn btn-primary">Cambia Password</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane" [class.active]="activeTab === 'activity'" id="activityLog" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <!-- Tabella Desktop -->
+                                <div class="table-responsive d-none d-md-block" id="activitiesTableContainer">
+                                    <table class="table table-borderless align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col">Data</th>
+                                                <th scope="col">Attività</th>
+                                                <th scope="col">Dettagli</th>
+                                                <th scope="col">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let activity of activities">
+                                                <td>{{ activity.date }}</td>
+                                                <td>{{ activity.activity }}</td>
+                                                <td>{{ activity.details }}</td>
+                                                <td><span class="badge" [ngClass]="getBadgeClass(activity.type)">{{ activity.type }}</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Accordion Mobile -->
+                                <div id="activitiesAccordion" class="d-md-none">
+                                    <div *ngFor="let activity of activities; let i = index" class="activity-accordion-item">
+                                        <button class="activity-accordion-header" 
+                                                type="button" 
+                                                (click)="toggleActivityAccordion('activity' + activity.id)"
+                                                [attr.aria-expanded]="getActivityAccordionState('activity' + activity.id)"
+                                                [attr.aria-controls]="'activity' + activity.id">
+                                            <div>
+                                                <div class="fw-semibold">{{ activity.activity }}</div>
+                                                <div class="text-muted small">{{ activity.date }}</div>
+                                            </div>
+                                            <div>
+                                                <span class="badge" [ngClass]="getBadgeClass(activity.type)">{{ activity.type }}</span>
+                                            </div>
+                                        </button>
+                                        <div [id]="'activity' + activity.id" 
+                                             class="collapse"
+                                             [class.show]="getActivityAccordionState('activity' + activity.id) === 'true'">
+                                            <div class="activity-accordion-body">
+                                                <div class="activity-info-row">
+                                                    <span class="activity-info-label">Data</span>
+                                                    <span class="activity-info-value">{{ activity.date }}</span>
+                                                </div>
+                                                <div class="activity-info-row">
+                                                    <span class="activity-info-label">Attività</span>
+                                                    <span class="activity-info-value">{{ activity.activity }}</span>
+                                                </div>
+                                                <div class="activity-info-row">
+                                                    <span class="activity-info-label">Dettagli</span>
+                                                    <span class="activity-info-value">{{ activity.details }}</span>
+                                                </div>
+                                                <div class="activity-info-row">
+                                                    <span class="activity-info-label">Tipo</span>
+                                                    <span class="activity-info-value">
+                                                        <span class="badge" [ngClass]="getBadgeClass(activity.type)">{{ activity.type }}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiche Veloci -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistiche Veloci</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-warning-subtle text-warning rounded fs-3">
+                                        <i class="ri-run-line"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">{{ stats.allenamenti }} Allenamenti</h6>
+                                    <p class="text-muted mb-0">Questo mese</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm flex-shrink-0">
+                                    <span class="avatar-title bg-info-subtle text-info rounded fs-3">
+                                        <i class="ri-calendar-check-line"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">{{ stats.prenotazioni }} Prenotazioni</h6>
+                                    <p class="text-muted mb-0">Attive</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifica Profilo -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Modifica Dati Personali</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form [formGroup]="profileForm">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="editFirstname" class="form-label">Nome</label>
+                                <input type="text" class="form-control" id="editFirstname" formControlName="nome" placeholder="Inserisci il tuo nome">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="editLastname" class="form-label">Cognome</label>
+                                <input type="text" class="form-control" id="editLastname" formControlName="cognome" placeholder="Inserisci il tuo cognome">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="editEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" formControlName="email" placeholder="Inserisci la tua email">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="editPhone" class="form-label">Telefono</label>
+                                <input type="text" class="form-control" id="editPhone" formControlName="telefono" placeholder="Inserisci il numero di telefono">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="editBirthdate" class="form-label">Data di Nascita</label>
+                                <input type="date" class="form-control" id="editBirthdate" formControlName="dataNascita">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label for="editGender" class="form-label">Sesso</label>
+                                <select class="form-select" id="editGender" formControlName="sesso">
+                                    <option value="Maschio">Maschio</option>
+                                    <option value="Femmina">Femmina</option>
+                                    <option value="Altro">Altro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label for="editSocieta" class="form-label">Società</label>
+                                <input type="text" class="form-control" id="editSocieta" formControlName="societa" placeholder="Inserisci la tua società">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-soft-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" (click)="saveProfileChanges()">Salva</button>
+            </div>
+        </div>
+    </div>
+</div>

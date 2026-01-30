@@ -1,0 +1,65 @@
+/* Stili per accordion mobile dashboard */
+.booking-accordion-item {
+    margin-bottom: 0.75rem;
+    border: 1px solid #e9ebec;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.booking-accordion-header {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.booking-accordion-header:hover {
+    background-color: #e9ecef;
+}
+
+.booking-accordion-body {
+    padding: 1rem;
+    background-color: white;
+}
+
+/* Animazione per collapse */
+.collapse {
+    display: none;
+    transition: height 0.35s ease;
+}
+
+.collapse.show {
+    display: block;
+}
+
+.collapsing {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.35s ease;
+}
+
+.booking-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.booking-info-row:last-child {
+    border-bottom: none;
+}
+
+.booking-info-label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.booking-info-value {
+    text-align: right;
+}
