@@ -1,0 +1,6 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gym-investire-iscritto-web
+spec:
+  replicas: 1
