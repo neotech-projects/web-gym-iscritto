@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/progetto-palestra-frontend",
+            "outputPath": "dist/gym-investire-iscritto-web",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -64,10 +64,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "progetto-palestra-frontend:build:production"
+              "buildTarget": "gym-investire-iscritto-web:build:production"
             },
             "development": {
-              "buildTarget": "progetto-palestra-frontend:build:development"
+              "buildTarget": "gym-investire-iscritto-web:build:development"
             }
           },
           "defaultConfiguration": "development"
