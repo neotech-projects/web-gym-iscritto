@@ -33,6 +33,7 @@ export interface AttivitaRecente {
 })
 export class AuthService {
   private apiUrl = environment.apiUrl;
+  private apiServerUrl = environment.apiServerUrl;
   private currentUser: User | null = null;
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
@@ -49,23 +50,27 @@ export class AuthService {
   }
 
   login(username: string, password: string, rememberMe: boolean = false): Observable<any> {
-    // TODO: Implementare chiamata API reale
-    // Per ora simulazione
-    return of({
-      token: 'mock_token_' + Date.now(),
-      user: {
-        id: 1,
-        username: username,
-        email: username.includes('@') ? username : username + '@example.com',
-        nome: 'Mario',
-        cognome: 'Rossi',
-        societa: 'Società A'
-      }
-    }).pipe(
+    const url = `${this.apiServerUrl}api/login`;
+    return this.http.post<any>(url, { username, password }).pipe(
       tap(response => {
-        this.setAuthData(response.token, response.user, rememberMe);
+        const token = response.token ?? response.accessToken ?? response.jwt;
+        const user = response.user ?? response;
+        if (token && user) {
+          this.setAuthData(token, this.normalizeUser(user, username), rememberMe);
+        }
       })
     );
+  }
+
+  private normalizeUser(data: any, username: string): User {
+    return {
+      id: data.id ?? 0,
+      username: data.username ?? username,
+      email: data.email ?? (username.includes('@') ? username : username + '@example.com'),
+      nome: data.nome ?? data.firstName ?? '',
+      cognome: data.cognome ?? data.lastName ?? '',
+      societa: data.societa
+    };
   }
 
   register(userData: any): Observable<any> {
