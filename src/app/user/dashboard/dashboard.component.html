@@ -94,8 +94,8 @@
                         <tbody>
                             <tr *ngFor="let prenotazione of prossimePrenotazioni">
                                 <td>{{ formatData(prenotazione.data) }}</td>
-                                <td>{{ prenotazione.oraInizio }} - {{ prenotazione.oraFine }}</td>
-                                <td>{{ prenotazione.durata }}</td>
+                                <td>{{ formatOrario(getOrario(prenotazione)) }}</td>
+                                <td>{{ getDurata(prenotazione) }}</td>
                                 <td><span class="badge bg-success-subtle text-success">{{ prenotazione.stato }}</span></td>
                                 <td>
                                     <button type="button" 
@@ -122,7 +122,7 @@
                                 [attr.aria-controls]="'dashboardBooking' + prenotazione.id">
                             <div>
                                 <div class="fw-semibold">{{ formatData(prenotazione.data) }}</div>
-                                <div class="text-muted small">{{ prenotazione.oraInizio }} - {{ prenotazione.oraFine }}</div>
+                                <div class="text-muted small">{{ formatOrario(getOrario(prenotazione)) }}</div>
                             </div>
                             <div>
                                 <span class="badge bg-success-subtle text-success">{{ prenotazione.stato }}</span>
@@ -138,11 +138,11 @@
                                 </div>
                                 <div class="booking-info-row">
                                     <span class="booking-info-label">Orario</span>
-                                    <span class="booking-info-value">{{ prenotazione.oraInizio }} - {{ prenotazione.oraFine }}</span>
+                                    <span class="booking-info-value">{{ formatOrario(getOrario(prenotazione)) }}</span>
                                 </div>
                                 <div class="booking-info-row">
                                     <span class="booking-info-label">Durata</span>
-                                    <span class="booking-info-value">{{ prenotazione.durata }}</span>
+                                    <span class="booking-info-value">{{ getDurata(prenotazione) }}</span>
                                 </div>
                                 <div class="booking-info-row">
                                     <span class="booking-info-label">Stato</span>

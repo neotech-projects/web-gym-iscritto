@@ -1,6 +1,8 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { PrenotazioneService, PrenotazioneGenerale } from '../../services/prenotazione.service';
+import { forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { PrenotazioneService, PrenotazioneGenerale, Prenotazione } from '../../services/prenotazione.service';
 import { AuthService } from '../../services/auth.service';
 
 
@@ -12,16 +14,26 @@ import { AuthService } from '../../services/auth.service';
 export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
   bookingForm!: FormGroup;
   calendar: any;
-  
+  /** Usato per applicare .calendar-desktop o .calendar-mobile al wrapper (CSS separato desktop/mobile). */
+  isMobileView = false;
+
   private allBookings: any[] = [];
   private myBookings: any[] = [];
   private currentViewingEvent: any = null;
   private readonly MAX_CAPACITY = 10;
+  private resizeListener = (): void => {
+    const mobile = window.innerWidth <= 767;
+    if (mobile !== this.isMobileView) {
+      this.isMobileView = mobile;
+      this.cdr.detectChanges();
+    }
+  };
 
   constructor(
     private fb: FormBuilder,
     private prenotazioneService: PrenotazioneService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {
     this.bookingForm = this.fb.group({
       date: ['', Validators.required],
@@ -31,23 +43,18 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Esponi selectTimeSlot globalmente per il template
+    this.isMobileView = typeof window !== 'undefined' && window.innerWidth <= 767;
     (window as any).selectTimeSlot = (startISO: string, endISO: string) => {
       this.selectTimeSlot(new Date(startISO), new Date(endISO));
     };
   }
 
   ngAfterViewInit(): void {
-    // Carica le prenotazioni prima di inizializzare il calendario
-    // Il calendario verrà inizializzato in loadBookings() dopo che i dati sono pronti
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.resizeListener);
+    }
+    this.initializeCalendarWithRetry();
     this.loadBookings();
-    
-    // Verifica che FullCalendar sia disponibile
-    this.waitForFullCalendar();
-  }
-
-  private waitForFullCalendar(): void {
-    // Funzione rimossa - non necessaria
   }
 
   private initializeCalendarWithRetry(attempt: number = 0): void {
@@ -71,79 +78,136 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.resizeListener);
+    }
     if (this.calendar) {
       this.calendar.destroy();
     }
   }
 
+  /** Normalizza una prenotazione dal backend in evento calendario (start/end in locale, poi ISO). */
+  private prenotazioneToEvent(p: any, isMine: boolean, userName: string): { id: string; title: string; start: string; end: string; backgroundColor?: string; borderColor?: string; extendedProps?: any; user?: string } | null {
+    const dataStr = this.parseBackendDate(p.data);
+    if (!dataStr) return null;
+    const rawOra = p.oraInizio ?? (p as any).ora_inizio ?? '';
+    const startTimeStr = this.parseBackendTime(rawOra);
+    if (!startTimeStr) return null;
+    const start = new Date(`${dataStr}T${startTimeStr}`);
+    if (isNaN(start.getTime())) return null;
+    const min = p.durataMinuti ?? (p as any).durata_minuti;
+    const rawFine = p.oraFine ?? (p as any).ora_fine ?? '';
+    const endTimeStr = rawFine ? this.parseBackendTime(rawFine) : null;
+    const end = endTimeStr
+      ? new Date(`${dataStr}T${endTimeStr}`)
+      : new Date(start.getTime() + (min ?? 60) * 60000);
+    if (isNaN(end.getTime())) return null;
+    if (isMine) {
+      return {
+        id: String(p.id),
+        title: 'La mia prenotazione',
+        start: start.toISOString(),
+        end: end.toISOString(),
+        backgroundColor: '#405189',
+        borderColor: '#405189',
+        extendedProps: { user: userName, isMyBooking: true }
+      };
+    }
+    return {
+      id: String(p.id),
+      title: (p as any).utente ? `Prenotazione (${(p as any).utente})` : 'Prenotazione',
+      user: (p as any).utente ?? '',
+      start: start.toISOString(),
+      end: end.toISOString()
+    };
+  }
+
+  /** Normalizza data dal backend in YYYY-MM-DD (sempre in ora locale). */
+  private parseBackendDate(data: any): string | null {
+    if (data == null) return null;
+    if (typeof data === 'string') {
+      const trimmed = data.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+      const d = new Date(trimmed);
+      if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    if (typeof data === 'number') {
+      const d = new Date(data);
+      if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    return null;
+  }
+
+  /** Normalizza ora dal backend in HH:mm:ss in ora locale (gestisce ISO tipo 1970-01-01T10:30:00.000Z). */
+  private parseBackendTime(ora: any): string | null {
+    if (ora == null || ora === '') return null;
+    const s = String(ora).trim();
+    if (s.includes('T')) {
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return null;
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    }
+    if (/^\d{1,2}:\d{1,2}/.test(s)) {
+      const parts = s.split(':');
+      const h = String(parseInt(parts[0], 10)).padStart(2, '0');
+      const m = String(parseInt(parts[1], 10) || 0).padStart(2, '0');
+      const sec = parts[2] != null ? String(parseInt(parts[2], 10) || 0).padStart(2, '0') : '00';
+      return `${h}:${m}:${sec}`;
+    }
+    return null;
+  }
+
   private loadBookings(): void {
     const user = this.authService.getCurrentUser();
-    const userName = user ? `${user.nome} ${user.cognome}` : 'Mario Rossi';
+    const userName = user ? `${user.nome} ${user.cognome}` : '';
+    const utenteId = user?.id;
 
-    // Carica le prenotazioni dell'utente corrente
-    this.prenotazioneService.getPrenotazioni().subscribe(bookings => {
-      // Converti le prenotazioni nel formato per FullCalendar
-      this.myBookings = bookings.map(booking => {
-        const start = new Date(`${booking.data}T${booking.oraInizio}`);
-        const end = new Date(`${booking.data}T${booking.oraFine}`);
-        
-        return {
-          id: String(booking.id),
-          title: 'La mia prenotazione',
-          start: start.toISOString(),
-          end: end.toISOString(),
-          backgroundColor: '#405189',
-          borderColor: '#405189',
-          extendedProps: {
-            user: userName,
-            isMyBooking: true
+    const my$ = utenteId != null
+      ? this.prenotazioneService.getPrenotazioni(utenteId).pipe(catchError(() => of([])))
+      : of([]);
+    const generali$ = this.prenotazioneService.getPrenotazioniGenerali().pipe(catchError(() => of([])));
+
+    forkJoin({ my: my$, generali: generali$ }).subscribe({
+      next: ({ my: bookings, generali: prenotazioniGenerali }) => {
+        this.myBookings = (bookings || [])
+          .map(b => this.prenotazioneToEvent(b, true, userName))
+          .filter((e): e is NonNullable<typeof e> => e != null);
+        this.allBookings = (prenotazioniGenerali || [])
+          .map(p => this.prenotazioneToEvent(p, false, userName))
+          .filter((e): e is NonNullable<typeof e> => e != null);
+        this.mergeMyBookingsIntoAll();
+
+        if (this.calendar) {
+          if (typeof this.calendar.refetchEvents === 'function') {
+            this.calendar.refetchEvents();
+          } else {
+            this.updateCalendar();
           }
-        };
-      });
-    });
-
-    // Carica tutte le prenotazioni generali (di tutti gli utenti) per calcolare disponibilità
-    this.prenotazioneService.getPrenotazioniGenerali().subscribe(prenotazioniGenerali => {
-      // Converti le prenotazioni generali nel formato atteso
-      this.allBookings = prenotazioniGenerali.map(prenotazione => {
-        const start = new Date(`${prenotazione.data}T${prenotazione.oraInizio}`);
-        const end = new Date(`${prenotazione.data}T${prenotazione.oraFine}`);
-        
-        return {
-          id: String(prenotazione.id),
-          user: prenotazione.utente,
-          start: start.toISOString(),
-          end: end.toISOString()
-        };
-      });
-
-      // Aggiungi anche le prenotazioni dell'utente corrente se non sono già presenti
-      const userBookings = this.myBookings.map(b => ({
-        id: b.id,
-        user: b.extendedProps.user || userName,
-        start: b.start,
-        end: b.end
-      }));
-
-      // Unisci le prenotazioni, evitando duplicati
-      const existingIds = new Set(this.allBookings.map(b => b.id));
-      userBookings.forEach(ub => {
-        if (!existingIds.has(ub.id)) {
-          this.allBookings.push(ub);
+          setTimeout(() => this.recolorAllDayCells(), 150);
+        } else {
+          this.initializeCalendarWithRetry();
         }
-      });
-      
-      // Se il calendario è già inizializzato, aggiornalo
-      if (this.calendar) {
-        this.updateCalendar();
-      } else {
-        // Altrimenti inizializzalo ora dopo che i dati sono pronti
-        this.initializeCalendarWithRetry();
+      },
+      error: () => {
+        this.myBookings = [];
+        this.allBookings = [];
+        if (!this.calendar) {
+          this.initializeCalendarWithRetry();
+        }
       }
     });
   }
 
-  // Metodo rimosso - ora le prenotazioni generali arrivano dal microservizio
+  private mergeMyBookingsIntoAll(): void {
+    this.myBookings.forEach(mb => {
+      const i = this.allBookings.findIndex(b => b.id === mb.id);
+      if (i >= 0) {
+        this.allBookings[i] = mb;
+      } else {
+        this.allBookings.push(mb);
+      }
+    });
+  }
 
   private initCalendar(): void {
     const calendarEl = document.getElementById('calendar');
@@ -173,8 +237,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       dateInput.setAttribute('min', todayISO);
     }
 
-    const allEvents = [...this.myBookings, ...this.generateAvailabilityBackgrounds()];
-
+    const self = this;
     this.calendar = new FullCalendar.Calendar(calendarEl, {
       locale: 'it',
       headerToolbar: {
@@ -190,14 +253,16 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       editable: false,
       selectable: true,
       selectMirror: true,
-      dayMaxEvents: true, // Mostra tutti gli eventi, ma li nascondiamo con CSS per mostrare solo il primo
+      dayMaxEvents: true,
       weekends: true,
       businessHours: {
         daysOfWeek: [1, 2, 3, 4, 5, 6],
         startTime: '06:00',
         endTime: '23:00'
       },
-      events: allEvents,
+      events: (fetchInfo: any, successCallback: (events: any[]) => void) => {
+        successCallback([...self.myBookings, ...self.generateAvailabilityBackgrounds()]);
+      },
       dateClick: (info: any) => {
         this.handleDateClick(info);
       },
@@ -208,7 +273,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
         this.handleEventClick(info);
       },
       eventMouseEnter: (info: any) => {
-        if (info.event.extendedProps.isMyBooking === true) {
+        if (info.event.extendedProps?.isMyBooking === true) {
           info.el.style.cursor = 'pointer';
         }
       },
@@ -264,28 +329,23 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       this.setupPopoverRemoval();
     }
     
-    // Personalizza i link "+X more" dopo il rendering iniziale
     setTimeout(() => {
       this.customizeAllMoreLinks();
       this.removeDuplicateEvents();
+      this.recolorAllDayCells();
       this.setupDuplicateRemovalObserver();
     }, 100);
     
-    // Personalizza anche dopo ogni cambio di vista
     this.calendar.on('eventsSet', () => {
       setTimeout(() => {
         this.customizeAllMoreLinks();
         this.removeDuplicateEvents();
-        // Nascondi i link "+X more" quando c'è solo un evento
+        this.recolorAllDayCells();
         const calendarEl = document.getElementById('calendar');
         if (calendarEl) {
-          const allDayCells = calendarEl.querySelectorAll('.fc-day');
-          allDayCells.forEach((cell: any) => {
+          calendarEl.querySelectorAll('.fc-day').forEach((cell: any) => {
             this.hideMoreLinkIfSingleEvent(cell);
-            // Su mobile, forza il posizionamento corretto
-            if (this.isMobile()) {
-              this.fixMobileEventPositioning(cell);
-            }
+            if (this.isMobile()) this.fixMobileEventPositioning(cell);
           });
         }
       }, 50);
@@ -400,7 +460,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private handleEventClick(info: any): void {
     // Solo le prenotazioni dell'utente sono cliccabili
-    if (info.event.extendedProps.isMyBooking === true) {
+    if (info.event.extendedProps?.isMyBooking === true) {
       this.showBookingDetails(info.event);
     }
   }
@@ -450,42 +510,13 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private countBookingsInSlot(slotStart: Date, slotEnd: Date): number {
     let count = 0;
-    
-    // Conta le prenotazioni in allBookings
     this.allBookings.forEach(booking => {
       const bookingStart = new Date(booking.start);
       const bookingEnd = new Date(booking.end);
-      
-      if (bookingStart < slotEnd && bookingEnd > slotStart) {
+      if (!isNaN(bookingStart.getTime()) && !isNaN(bookingEnd.getTime()) && bookingStart < slotEnd && bookingEnd > slotStart) {
         count++;
       }
     });
-    
-    // Aggiungi anche le prenotazioni dell'utente da myBookings se non sono già in allBookings
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      const userName = currentUser.nome + ' ' + currentUser.cognome;
-      this.myBookings.forEach(booking => {
-        const bookingStart = new Date(booking.start);
-        const bookingEnd = new Date(booking.end);
-        
-        if (bookingStart < slotEnd && bookingEnd > slotStart) {
-          // Controlla se questa prenotazione è già stata contata in allBookings
-          const alreadyCounted = this.allBookings.some(ab => {
-            const abStart = new Date(ab.start);
-            const abEnd = new Date(ab.end);
-            return abStart.getTime() === bookingStart.getTime() && 
-                   abEnd.getTime() === bookingEnd.getTime() &&
-                   ab.user === userName;
-          });
-          
-          if (!alreadyCounted) {
-            count++;
-          }
-        }
-      });
-    }
-    
     return count;
   }
 
@@ -507,15 +538,11 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     
     if (hasInMyBookings) return true;
     
-    // Se non trovata in myBookings, controlla in allBookings
-    // Solo prenotazioni future (non scadute)
     return this.allBookings.some(booking => {
-      if (booking.user !== userName) return false;
-      
+      const bUser = booking.extendedProps?.user ?? booking.user;
+      if (bUser !== userName && !booking.extendedProps?.isMyBooking) return false;
       const bookingStart = new Date(booking.start);
       const bookingEnd = new Date(booking.end);
-      
-      // Controlla sovrapposizione E che la prenotazione sia ancora futura
       return bookingEnd > now && bookingStart < slotEnd && bookingEnd > slotStart;
     });
   }
@@ -535,9 +562,9 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     
     if (hasFutureInMyBookings) return true;
     
-    // Controlla anche in allBookings
     return this.allBookings.some(booking => {
-      if (booking.user !== userName) return false;
+      const bUser = booking.extendedProps?.user ?? booking.user;
+      if (bUser !== userName && !booking.extendedProps?.isMyBooking) return false;
       const bookingEnd = new Date(booking.end);
       return bookingEnd > now;
     });
@@ -558,30 +585,58 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private colorDayCell(info: any): void {
-    if (this.calendar.view.type !== 'dayGridMonth') return;
-    
+    if (this.calendar && this.calendar.view?.type !== 'dayGridMonth') return;
+    const el = info?.el as HTMLElement;
+    if (!el) return;
+
     let maxOccupancy = 0;
     let hasAvailability = false;
-    
+    const cellDate = new Date(info.date);
+    cellDate.setHours(12, 0, 0, 0);
+
     for (let hour = 6; hour < 23; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        const slotStart = new Date(info.date);
+        const slotStart = new Date(cellDate);
         slotStart.setHours(hour, minute, 0, 0);
         const slotEnd = new Date(slotStart.getTime() + 30 * 60000);
-        
         const count = this.countBookingsInSlot(slotStart, slotEnd);
         if (count > maxOccupancy) maxOccupancy = count;
         if (count < this.MAX_CAPACITY) hasAvailability = true;
       }
     }
-    
+
     if (maxOccupancy >= this.MAX_CAPACITY && !hasAvailability) {
-      (info.el as HTMLElement).style.backgroundColor = 'rgba(240, 101, 72, 0.2)';
+      el.style.backgroundColor = 'rgba(240, 101, 72, 0.2)';
     } else if (maxOccupancy > 0) {
-      (info.el as HTMLElement).style.backgroundColor = 'rgba(247, 184, 75, 0.15)';
+      el.style.backgroundColor = 'rgba(247, 184, 75, 0.15)';
     } else {
-      (info.el as HTMLElement).style.backgroundColor = 'rgba(10, 179, 156, 0.1)';
+      el.style.backgroundColor = 'rgba(10, 179, 156, 0.1)';
     }
+  }
+
+  private recolorAllDayCells(): void {
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl || !this.calendar) return;
+    const view = this.calendar.view || this.calendar.getCurrentData?.()?.viewApi;
+    const viewType = view?.type;
+    if (viewType !== 'dayGridMonth') return;
+
+    const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
+    if (dayCells.length === 0) {
+      (calendarEl.querySelectorAll('.fc-day') as NodeListOf<HTMLElement>).forEach((cell) => {
+        const dateStr = cell.getAttribute('data-date');
+        if (!dateStr || dateStr.length < 10) return;
+        const dayDate = new Date(dateStr.substring(0, 10) + 'T12:00:00');
+        if (!isNaN(dayDate.getTime())) this.colorDayCell({ date: dayDate, el: cell });
+      });
+      return;
+    }
+    dayCells.forEach((cell: any) => {
+      const dateStr = cell.getAttribute?.('data-date') || cell.querySelector?.('[data-date]')?.getAttribute?.('data-date');
+      if (!dateStr || dateStr.length < 10) return;
+      const dayDate = new Date(dateStr.substring(0, 10) + 'T12:00:00');
+      if (!isNaN(dayDate.getTime())) this.colorDayCell({ date: dayDate, el: cell });
+    });
   }
 
   private openBookingModal(start: Date, end: Date, currentOccupancy: number = 0): void {
@@ -748,35 +803,26 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     const tableBody = document.getElementById('dayAvailabilityTableBody');
     if (tableBody) {
       tableBody.innerHTML = '';
-      
       const now = new Date();
-      const clickedDate = new Date(date);
-      clickedDate.setHours(0, 0, 0, 0);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const d = new Date(date);
+      const clickedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
       const isToday = clickedDate.getTime() === today.getTime();
-      
-      // Conta quante prenotazioni personali l'utente ha in questo giorno
+
       const userBookingsForDay: any[] = [];
-      this.myBookings.forEach(booking => {
-        const bookingDate = new Date(booking.start);
-        bookingDate.setHours(0, 0, 0, 0);
-        if (bookingDate.getTime() === clickedDate.getTime()) {
-          userBookingsForDay.push(booking);
-        }
+      const sourceForUser = this.myBookings.length > 0 ? this.myBookings : this.allBookings.filter((b: any) => b.extendedProps?.isMyBooking === true);
+      sourceForUser.forEach((booking: any) => {
+        const bs = new Date(booking.start);
+        const bookingDay = new Date(bs.getFullYear(), bs.getMonth(), bs.getDate(), 12, 0, 0);
+        if (bookingDay.getTime() === clickedDate.getTime()) userBookingsForDay.push(booking);
       });
-      
-      // Se ci sono più di 1 prenotazione personale, considera solo la prima come personale
-      // Le altre verranno mostrate come prenotazioni di altri utenti
       const firstUserBooking = userBookingsForDay.length > 0 ? userBookingsForDay[0] : null;
       const firstUserBookingStart = firstUserBooking ? new Date(firstUserBooking.start) : null;
       const firstUserBookingEnd = firstUserBooking ? new Date(firstUserBooking.end) : null;
       
       for (let hour = 6; hour < 23; hour++) {
-        const slotStart = new Date(date);
-        slotStart.setHours(hour, 0, 0, 0);
+        const slotStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, 0, 0);
         const slotEnd = new Date(slotStart.getTime() + 60 * 60000);
-        
         const count = this.countBookingsInSlot(slotStart, slotEnd);
         const isPastTime = isToday && slotStart < now;
         
@@ -1000,8 +1046,8 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     
-    if (durationMinutes > 120) {
-      alert('La durata massima della prenotazione è 2 ore!');
+    if (durationMinutes > 60) {
+      alert('La durata massima della prenotazione è 1 ora!');
       return;
     }
     
@@ -1026,54 +1072,46 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       alert('⚠️ Spiacenti, la palestra è diventata al completo per questo orario.');
       return;
     }
-    
-    const newEvent = {
-      id: String(Date.now()),
-      title: 'La mia prenotazione',
-      start: start.toISOString(),
-      end: end.toISOString(),
-      backgroundColor: '#405189',
-      borderColor: '#405189',
-      extendedProps: {
-        user: this.authService.getCurrentUser()?.nome + ' ' + this.authService.getCurrentUser()?.cognome,
-        isMyBooking: true
-      }
-    };
-    
-    this.calendar.addEvent(newEvent);
-    this.myBookings.push(newEvent);
-    this.allBookings.push({
-      id: newEvent.id,
-      user: newEvent.extendedProps.user,
-      start: newEvent.start,
-      end: newEvent.end
-    });
-    
-    // Reset form
-    this.bookingForm.reset();
-    
-    // Usa le variabili già dichiarate all'inizio della funzione
-    if (dateInput) dateInput.value = '';
-    if (startTimeInput) startTimeInput.value = '';
-    if (endTimeInput) endTimeInput.value = '';
-    
-    const availabilityInfo = document.getElementById('availabilityInfo');
-    if (availabilityInfo) availabilityInfo.style.display = 'none';
-    
-    // Chiudi modale
-    const modalElement = document.getElementById('bookingModal');
-    if (modalElement) {
-      const Bootstrap = (window as any).bootstrap;
-      if (Bootstrap) {
-        const modal = Bootstrap.Modal.getInstance(modalElement);
-        if (modal) modal.hide();
-      }
+
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) {
+      alert('Sessione non valida. Effettua di nuovo l\'accesso.');
+      return;
     }
-    
-    // Aggiorna calendario
-    this.updateCalendar();
-    
-    alert(`✓ Prenotazione confermata!\n\nData: ${new Date(date).toLocaleDateString('it-IT')}\nOrario: ${startTime} - ${endTime}\n\nRiceverai una email di conferma a breve.`);
+
+    const oraInizioStr = startTime.length === 5 ? `${startTime}:00` : startTime;
+    const oraFineStr = endTime.length === 5 ? `${endTime}:00` : endTime;
+    const body: Partial<Prenotazione> = {
+      data: date,
+      oraInizio: `${date}T${oraInizioStr}`,
+      oraFine: `${date}T${oraFineStr}`,
+      durataMinuti: Math.round(durationMinutes)
+    };
+
+    this.prenotazioneService.creaPrenotazione(utenteId, body).subscribe({
+      next: () => {
+        this.bookingForm.reset();
+        if (dateInput) dateInput.value = '';
+        if (startTimeInput) startTimeInput.value = '';
+        if (endTimeInput) endTimeInput.value = '';
+        const availabilityInfo = document.getElementById('availabilityInfo');
+        if (availabilityInfo) availabilityInfo.style.display = 'none';
+        const modalElement = document.getElementById('bookingModal');
+        if (modalElement) {
+          const Bootstrap = (window as any).bootstrap;
+          if (Bootstrap) {
+            const modal = Bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+          }
+        }
+        this.loadBookings();
+        alert(`✓ Prenotazione confermata!\n\nData: ${new Date(date).toLocaleDateString('it-IT')}\nOrario: ${startTime} - ${endTime}`);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || err?.message || err?.statusText || 'Errore di rete';
+        alert('Errore durante la prenotazione: ' + msg);
+      }
+    });
   }
 
   private showBookingDetails(event: any): void {
@@ -1121,73 +1159,49 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
 
   deleteCurrentBooking(): void {
     if (!this.currentViewingEvent) return;
-    
-    if (confirm('Sei sicuro di voler cancellare questa prenotazione?')) {
-      this.currentViewingEvent.remove();
-      
-      const indexAll = this.allBookings.findIndex(b => b.id === this.currentViewingEvent.id);
-      if (indexAll > -1) {
-        this.allBookings.splice(indexAll, 1);
-      }
-      
-      const indexMy = this.myBookings.findIndex(b => b.id === this.currentViewingEvent.id);
-      if (indexMy > -1) {
-        this.myBookings.splice(indexMy, 1);
-      }
-      
-      this.updateCalendar();
-      
-      const modalElement = document.getElementById('viewBookingModal');
-      if (modalElement) {
-        const Bootstrap = (window as any).bootstrap;
-        const modal = Bootstrap ? Bootstrap.Modal.getInstance(modalElement) : null;
-        if (modal) modal.hide();
-      }
-      
-      alert('Prenotazione cancellata con successo!');
-      this.currentViewingEvent = null;
-    }
+    const id = typeof this.currentViewingEvent.id === 'string'
+      ? parseInt(this.currentViewingEvent.id, 10) : this.currentViewingEvent.id;
+    if (isNaN(id)) return;
+
+    if (!confirm('Sei sicuro di voler cancellare questa prenotazione?')) return;
+
+    this.prenotazioneService.annullaPrenotazione(id).subscribe({
+      next: () => {
+        this.currentViewingEvent.remove();
+        const idStr = String(id);
+        const indexAll = this.allBookings.findIndex((b: any) => String(b.id) === idStr);
+        if (indexAll > -1) this.allBookings.splice(indexAll, 1);
+        const indexMy = this.myBookings.findIndex((b: any) => String(b.id) === idStr);
+        if (indexMy > -1) this.myBookings.splice(indexMy, 1);
+        this.updateCalendar();
+        const modalElement = document.getElementById('viewBookingModal');
+        if (modalElement) {
+          const Bootstrap = (window as any).bootstrap;
+          const modal = Bootstrap ? Bootstrap.Modal.getInstance(modalElement) : null;
+          if (modal) modal.hide();
+        }
+        alert('Prenotazione cancellata con successo!');
+        this.currentViewingEvent = null;
+      },
+      error: () => alert('Errore durante la cancellazione della prenotazione.')
+    });
   }
 
   private updateCalendar(): void {
     if (!this.calendar) return;
     
-    // Rimuovi tutti gli eventi background
-    this.calendar.getEvents().forEach((evt: any) => {
-      if (evt.display === 'background') {
-        evt.remove();
-      }
-    });
-    
-    // IMPORTANTE: Rimuovi eventi duplicati delle prenotazioni
-    const allEvents = this.calendar.getEvents();
-    const seenIds = new Set<string>();
-    allEvents.forEach((evt: any) => {
-      if (evt.id && !evt.display) { // Solo eventi normali, non background
-        if (seenIds.has(evt.id)) {
-          evt.remove(); // Rimuovi duplicati
-        } else {
-          seenIds.add(evt.id);
-        }
-      }
-    });
-    
-    // Aggiungi nuovi background
+    this.calendar.getEvents().forEach((evt: any) => evt.remove());
+    this.allBookings.forEach(b => this.calendar.addEvent(b));
     const newBackgrounds = this.generateAvailabilityBackgrounds();
     newBackgrounds.forEach(bg => this.calendar.addEvent(bg));
     
-    // Ricalcola colori e rimuovi duplicati dopo il render
     setTimeout(() => {
       this.calendar.render();
-      // Rimuovi duplicati anche dopo il render
       this.removeDuplicateEvents();
-      // Nascondi i link "+X more" quando c'è solo un evento
+      this.recolorAllDayCells();
       const calendarEl = document.getElementById('calendar');
       if (calendarEl) {
-        const allDayCells = calendarEl.querySelectorAll('.fc-day');
-        allDayCells.forEach((cell: any) => {
-          this.hideMoreLinkIfSingleEvent(cell);
-        });
+        calendarEl.querySelectorAll('.fc-day').forEach((cell: any) => this.hideMoreLinkIfSingleEvent(cell));
       }
     }, 100);
   }

@@ -35,7 +35,7 @@
     <div class="col-xl-9">
         <div class="card card-h-100">
             <div class="card-body p-2 p-md-3">
-                <div id="calendar" class="calendar-wrapper"></div>
+                <div id="calendar" class="calendar-wrapper" [class.calendar-desktop]="!isMobileView" [class.calendar-mobile]="isMobileView"></div>
             </div>
         </div>
     </div>
@@ -182,7 +182,7 @@
                     </div>
                     <div class="alert alert-info" role="alert">
                         <i class="ri-information-line me-2"></i>
-                        <strong>Nota:</strong> La prenotazione ha una durata minima di 30 minuti e massima di 2 ore.
+                        <strong>Nota:</strong> La prenotazione ha una durata minima di 30 minuti e massima di 1 ora.
                     </div>
                 </form>
             </div>

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AuthService, User, ProfiloUtente, AttivitaRecente } from '../../services/auth.service';
-import { PrenotazioneService } from '../../services/prenotazione.service';
+import { AuthService, User, ProfiloUtente } from '../../services/auth.service';
+import { PrenotazioneService, Prenotazione } from '../../services/prenotazione.service';
 
 declare var bootstrap: any;
 
@@ -26,8 +26,12 @@ export class ProfiloUtenteComponent implements OnInit {
     allenamenti: 0,
     prenotazioni: 0
   };
-  activities: AttivitaRecente[] = [];
+  storicoPrenotazioni: Prenotazione[] = [];
   openActivityAccordions: { [key: string]: boolean } = {};
+  
+  showOldPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -72,21 +76,22 @@ export class ProfiloUtenteComponent implements OnInit {
   }
 
   loadProfiloUtente(): void {
-    this.authService.getProfiloUtente().subscribe(profilo => {
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) return;
+    this.authService.getProfiloUtente(utenteId).subscribe(profilo => {
       this.profiloUtente = profilo;
       
       // Aggiorna i dati del profilo
       this.profileData.telefono = profilo.telefono || '';
       this.profileData.dataNascita = profilo.dataNascita ? this.formatDateForDisplay(profilo.dataNascita) : '';
       this.profileData.sesso = profilo.sesso || '';
-      this.profileData.societa = profilo.societa || '';
+      const societa = profilo.societaNome ?? profilo.societa ?? '';
+      this.profileData.societa = societa;
       
-      // Aggiorna anche l'utente corrente se necessario
       if (this.user) {
-        this.user.societa = profilo.societa;
+        this.user.societa = societa;
       }
       
-      // Popola il form con i dati del profilo
       this.profileForm.patchValue({
         nome: profilo.nome,
         cognome: profilo.cognome,
@@ -94,7 +99,7 @@ export class ProfiloUtenteComponent implements OnInit {
         telefono: profilo.telefono || '',
         dataNascita: profilo.dataNascita || '',
         sesso: profilo.sesso || 'Maschio',
-        societa: profilo.societa || ''
+        societa
       });
     });
   }
@@ -118,17 +123,19 @@ export class ProfiloUtenteComponent implements OnInit {
   }
 
   loadStats(): void {
-    this.prenotazioneService.getStatistiche().subscribe(stats => {
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) return;
+    this.prenotazioneService.getStatistiche(utenteId).subscribe(stats => {
       this.stats = stats;
     });
   }
 
   loadActivities(): void {
-    // Carica le attività recenti dal microservizio
-    this.authService.getAttivitaRecenti().subscribe(activities => {
-      this.activities = activities;
-      // Inizializza tutti gli accordion come chiusi
-      this.activities.forEach(a => this.openActivityAccordions['activity' + a.id] = false);
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) return;
+    this.prenotazioneService.getStoricoPrenotazioni(utenteId).subscribe(prenotazioni => {
+      this.storicoPrenotazioni = Array.isArray(prenotazioni) ? prenotazioni : [];
+      this.storicoPrenotazioni.forEach(p => this.openActivityAccordions['activity' + p.id] = false);
     });
   }
 
@@ -142,74 +149,132 @@ export class ProfiloUtenteComponent implements OnInit {
       telefono: this.profileData.telefono,
       dataNascita: this.profileData.dataNascita ? this.formatDateForInput(this.profileData.dataNascita) : (this.profiloUtente?.dataNascita || ''),
       sesso: this.profileData.sesso || this.profiloUtente?.sesso || 'Maschio',
-      societa: profilo?.societa || this.profileData.societa || ''
+      societa: profilo?.societaNome ?? profilo?.societa ?? this.profileData.societa ?? ''
     });
   }
 
   saveProfileChanges(): void {
-    if (this.profileForm.valid) {
-      const formValue = this.profileForm.value;
-      
-      // Aggiorna i dati visualizzati
-      if (this.user) {
-        this.user.nome = formValue.nome;
-        this.user.cognome = formValue.cognome;
-        this.user.email = formValue.email;
-        this.user.societa = formValue.societa;
-      }
-      
-      this.profileData.telefono = formValue.telefono;
-      this.profileData.dataNascita = this.formatDateForDisplay(formValue.dataNascita);
-      this.profileData.sesso = formValue.sesso;
-      this.profileData.societa = formValue.societa;
-      
-      // Chiudi modale
-      const modalElement = document.getElementById('editProfileModal');
-      if (modalElement && typeof bootstrap !== 'undefined') {
-        const modal = bootstrap.Modal.getInstance(modalElement);
-        if (modal) modal.hide();
-      }
-      
-      alert('Profilo aggiornato con successo!');
-    } else {
-      alert('Per favore, compila tutti i campi obbligatori.');
+    const formValue = this.profileForm.value;
+    
+    // Validazione email
+    if (!formValue.email || formValue.email.trim() === '') {
+      alert('L\'email è obbligatoria!');
+      return;
     }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formValue.email)) {
+      alert('Inserisci un indirizzo email valido!');
+      return;
+    }
+    
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) {
+      alert('Sessione scaduta. Effettua nuovamente il login.');
+      return;
+    }
+    
+    this.authService.modificaProfilo(utenteId, formValue.email, formValue.telefono || '').subscribe({
+      next: (response) => {
+        // Aggiorna i dati visualizzati localmente
+        if (this.user) {
+          this.user.email = formValue.email;
+        }
+        if (this.profiloUtente) {
+          this.profiloUtente.email = formValue.email;
+          this.profiloUtente.telefono = formValue.telefono;
+        }
+        this.profileData.telefono = formValue.telefono;
+        
+        // Chiudi modale
+        const modalElement = document.getElementById('editProfileModal');
+        if (modalElement && typeof bootstrap !== 'undefined') {
+          const modal = bootstrap.Modal.getInstance(modalElement);
+          if (modal) modal.hide();
+        }
+        
+        alert('✓ Profilo aggiornato con successo!');
+      },
+      error: (err) => {
+        if (err.status === 400) {
+          alert('⚠️ Dati non validi. Verifica i campi inseriti.');
+        } else if (err.status === 404) {
+          alert('⚠️ Utente non trovato.');
+        } else {
+          alert('⚠️ Errore durante il salvataggio. Riprova più tardi.');
+        }
+      }
+    });
   }
 
   changePassword(): void {
-    if (this.passwordForm.valid) {
-      const formValue = this.passwordForm.value;
-      
-      // Validazione password
-      if (formValue.newPassword.length < 8) {
-        alert('La password deve essere di almeno 8 caratteri!');
-        return;
-      }
-      
-      if (!/(?=.*[A-Z])/.test(formValue.newPassword)) {
-        alert('La password deve contenere almeno una lettera maiuscola!');
-        return;
-      }
-      
-      if (!/(?=.*[0-9])/.test(formValue.newPassword)) {
-        alert('La password deve contenere almeno un numero!');
-        return;
-      }
-      
-      if (!/(?=.*[!@#$%^&*])/.test(formValue.newPassword)) {
-        alert('La password deve contenere almeno un carattere speciale (!@#$%^&*)!');
-        return;
-      }
-      
-      if (formValue.newPassword !== formValue.confirmPassword) {
-        alert('Le password non corrispondono!');
-        return;
-      }
-      
-      // Qui andrebbe la chiamata API per cambiare la password
-      alert('Password cambiata con successo!');
-      this.passwordForm.reset();
+    const formValue = this.passwordForm.value;
+    
+    // Validazione campi vuoti
+    if (!formValue.oldPassword || formValue.oldPassword.trim() === '') {
+      alert('Inserisci la vecchia password!');
+      return;
     }
+    
+    if (!formValue.newPassword || formValue.newPassword.trim() === '') {
+      alert('Inserisci la nuova password!');
+      return;
+    }
+    
+    if (!formValue.confirmPassword || formValue.confirmPassword.trim() === '') {
+      alert('Conferma la nuova password!');
+      return;
+    }
+    
+    // Validazione requisiti password
+    if (formValue.newPassword.length < 8) {
+      alert('La nuova password deve essere di almeno 8 caratteri!');
+      return;
+    }
+    
+    if (!/(?=.*[A-Z])/.test(formValue.newPassword)) {
+      alert('La nuova password deve contenere almeno una lettera maiuscola!');
+      return;
+    }
+    
+    if (!/(?=.*[0-9])/.test(formValue.newPassword)) {
+      alert('La nuova password deve contenere almeno un numero!');
+      return;
+    }
+    
+    if (!/(?=.*[!@#$%^&*])/.test(formValue.newPassword)) {
+      alert('La nuova password deve contenere almeno un carattere speciale (!@#$%^&*)!');
+      return;
+    }
+    
+    if (formValue.newPassword !== formValue.confirmPassword) {
+      alert('La nuova password e la conferma non corrispondono!');
+      return;
+    }
+    
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) {
+      alert('Sessione scaduta. Effettua nuovamente il login.');
+      return;
+    }
+    
+    this.authService.cambiaPassword(utenteId, formValue.oldPassword, formValue.newPassword).subscribe({
+      next: () => {
+        alert('✓ Password cambiata con successo!');
+        this.passwordForm.reset();
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          alert('⚠️ La vecchia password inserita non è corretta!\n\nVerifica di aver digitato correttamente la tua password attuale.');
+        } else if (err.status === 400) {
+          alert('⚠️ Dati non validi. Verifica i campi inseriti.');
+        } else if (err.status === 404) {
+          alert('⚠️ Utente non trovato. Effettua nuovamente il login.');
+        } else {
+          alert('⚠️ Errore durante il cambio password. Riprova più tardi.');
+        }
+      }
+    });
   }
 
   requestPasswordReset(): void {
@@ -230,8 +295,48 @@ export class ProfiloUtenteComponent implements OnInit {
     return this.openActivityAccordions[id] ? 'true' : 'false';
   }
 
+  formatDataPrenotazione(data: string): string {
+    if (!data) return '–';
+    try {
+      const d = new Date(data);
+      return isNaN(d.getTime()) ? data : d.toLocaleDateString('it-IT');
+    } catch { return data; }
+  }
+
+  formatOrario(ora: string | undefined): string {
+    if (!ora) return '–';
+    const t = (ora + '').trim();
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return t.substring(0, 5);
+    try {
+      const d = new Date(t);
+      if (!isNaN(d.getTime())) return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    } catch { }
+    return t;
+  }
+
+  getOrario(p: Prenotazione): string {
+    return p?.oraInizio ?? (p as any)?.ora_inizio ?? '';
+  }
+
+  getDurata(p: Prenotazione): string {
+    const min = p?.durataMinuti ?? (p as any)?.durata_minuti;
+    if (min != null) {
+      if (min < 60) return `${min} min`;
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m > 0 ? `${h}h ${m}min` : `${h}h`;
+    }
+    return '–';
+  }
+
   getBadgeClass(type: string): string {
     switch (type) {
+      case 'Confermata':
+        return 'bg-success-subtle text-success';
+      case 'Annullata':
+        return 'bg-danger-subtle text-danger';
+      case 'Completata':
+        return 'bg-secondary-subtle text-secondary';
       case 'Check-in':
         return 'bg-primary-subtle text-primary';
       case 'Prenotazione':

@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3001/api',
-  apiServerUrl: 'http://cloud.neotech.srl/api/gym-investire/'
+  apiUrl: 'http://localhost:8080'
+  // apiServerUrl: 'http://cloud.neotech.srl/api/gym-investire/iscritto-ms'
 };
 

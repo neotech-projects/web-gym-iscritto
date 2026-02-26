@@ -83,7 +83,7 @@
                             <div class="col-lg-12">
                                 <div class="mb-3">
                                     <label for="displaySocieta" class="form-label">Società</label>
-                                    <input type="text" class="form-control" id="displaySocieta" [value]="profiloUtente?.societa || user?.societa || profileData.societa" disabled>
+                                    <input type="text" class="form-control" id="displaySocieta" [value]="profiloUtente?.societaNome || profiloUtente?.societa || user?.societa || profileData.societa" disabled>
                                 </div>
                             </div>
                             <div class="col-lg-12">
@@ -102,19 +102,34 @@
                                 <div class="col-lg-12">
                                     <div class="mb-3">
                                         <label for="oldpasswordInput" class="form-label">Vecchia Password*</label>
-                                        <input type="password" class="form-control" id="oldpasswordInput" formControlName="oldPassword" placeholder="Inserisci la vecchia password">
+                                        <div class="input-group">
+                                            <input [type]="showOldPassword ? 'text' : 'password'" class="form-control" id="oldpasswordInput" formControlName="oldPassword" placeholder="Inserisci la vecchia password">
+                                            <button class="btn btn-outline-secondary" type="button" (click)="showOldPassword = !showOldPassword">
+                                                <i [class]="showOldPassword ? 'ri-eye-off-line' : 'ri-eye-line'"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label for="newpasswordInput" class="form-label">Nuova Password*</label>
-                                        <input type="password" class="form-control" id="newpasswordInput" formControlName="newPassword" placeholder="Inserisci la nuova password">
+                                        <div class="input-group">
+                                            <input [type]="showNewPassword ? 'text' : 'password'" class="form-control" id="newpasswordInput" formControlName="newPassword" placeholder="Inserisci la nuova password">
+                                            <button class="btn btn-outline-secondary" type="button" (click)="showNewPassword = !showNewPassword">
+                                                <i [class]="showNewPassword ? 'ri-eye-off-line' : 'ri-eye-line'"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="mb-3">
                                         <label for="confirmpasswordInput" class="form-label">Conferma Password*</label>
-                                        <input type="password" class="form-control" id="confirmpasswordInput" formControlName="confirmPassword" placeholder="Conferma la nuova password">
+                                        <div class="input-group">
+                                            <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" id="confirmpasswordInput" formControlName="confirmPassword" placeholder="Conferma la nuova password">
+                                            <button class="btn btn-outline-secondary" type="button" (click)="showConfirmPassword = !showConfirmPassword">
+                                                <i [class]="showConfirmPassword ? 'ri-eye-off-line' : 'ri-eye-line'"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-lg-12">
@@ -143,64 +158,61 @@
                     <div class="tab-pane" [class.active]="activeTab === 'activity'" id="activityLog" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-12">
-                                <!-- Tabella Desktop -->
-                                <div class="table-responsive d-none d-md-block" id="activitiesTableContainer">
+                                <div class="table-responsive d-none d-md-block">
                                     <table class="table table-borderless align-middle mb-0">
                                         <thead class="table-light">
                                             <tr>
                                                 <th scope="col">Data</th>
-                                                <th scope="col">Attività</th>
-                                                <th scope="col">Dettagli</th>
-                                                <th scope="col">Tipo</th>
+                                                <th scope="col">Orario</th>
+                                                <th scope="col">Durata</th>
+                                                <th scope="col">Stato</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr *ngFor="let activity of activities">
-                                                <td>{{ activity.date }}</td>
-                                                <td>{{ activity.activity }}</td>
-                                                <td>{{ activity.details }}</td>
-                                                <td><span class="badge" [ngClass]="getBadgeClass(activity.type)">{{ activity.type }}</span></td>
+                                            <tr *ngFor="let p of storicoPrenotazioni">
+                                                <td>{{ formatDataPrenotazione(p.data) }}</td>
+                                                <td>{{ formatOrario(getOrario(p)) }}</td>
+                                                <td>{{ getDurata(p) }}</td>
+                                                <td><span class="badge" [ngClass]="getBadgeClass(p.stato)">{{ p.stato }}</span></td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                
-                                <!-- Accordion Mobile -->
                                 <div id="activitiesAccordion" class="d-md-none">
-                                    <div *ngFor="let activity of activities; let i = index" class="activity-accordion-item">
+                                    <div *ngFor="let p of storicoPrenotazioni" class="activity-accordion-item">
                                         <button class="activity-accordion-header" 
                                                 type="button" 
-                                                (click)="toggleActivityAccordion('activity' + activity.id)"
-                                                [attr.aria-expanded]="getActivityAccordionState('activity' + activity.id)"
-                                                [attr.aria-controls]="'activity' + activity.id">
+                                                (click)="toggleActivityAccordion('activity' + p.id)"
+                                                [attr.aria-expanded]="getActivityAccordionState('activity' + p.id)"
+                                                [attr.aria-controls]="'activity' + p.id">
                                             <div>
-                                                <div class="fw-semibold">{{ activity.activity }}</div>
-                                                <div class="text-muted small">{{ activity.date }}</div>
+                                                <div class="fw-semibold">{{ formatDataPrenotazione(p.data) }}</div>
+                                                <div class="text-muted small">{{ formatOrario(getOrario(p)) }} · {{ getDurata(p) }}</div>
                                             </div>
                                             <div>
-                                                <span class="badge" [ngClass]="getBadgeClass(activity.type)">{{ activity.type }}</span>
+                                                <span class="badge" [ngClass]="getBadgeClass(p.stato)">{{ p.stato }}</span>
                                             </div>
                                         </button>
-                                        <div [id]="'activity' + activity.id" 
+                                        <div [id]="'activity' + p.id" 
                                              class="collapse"
-                                             [class.show]="getActivityAccordionState('activity' + activity.id) === 'true'">
+                                             [class.show]="getActivityAccordionState('activity' + p.id) === 'true'">
                                             <div class="activity-accordion-body">
                                                 <div class="activity-info-row">
                                                     <span class="activity-info-label">Data</span>
-                                                    <span class="activity-info-value">{{ activity.date }}</span>
+                                                    <span class="activity-info-value">{{ formatDataPrenotazione(p.data) }}</span>
                                                 </div>
                                                 <div class="activity-info-row">
-                                                    <span class="activity-info-label">Attività</span>
-                                                    <span class="activity-info-value">{{ activity.activity }}</span>
+                                                    <span class="activity-info-label">Orario</span>
+                                                    <span class="activity-info-value">{{ formatOrario(getOrario(p)) }}</span>
                                                 </div>
                                                 <div class="activity-info-row">
-                                                    <span class="activity-info-label">Dettagli</span>
-                                                    <span class="activity-info-value">{{ activity.details }}</span>
+                                                    <span class="activity-info-label">Durata</span>
+                                                    <span class="activity-info-value">{{ getDurata(p) }}</span>
                                                 </div>
                                                 <div class="activity-info-row">
-                                                    <span class="activity-info-label">Tipo</span>
+                                                    <span class="activity-info-label">Stato</span>
                                                     <span class="activity-info-value">
-                                                        <span class="badge" [ngClass]="getBadgeClass(activity.type)">{{ activity.type }}</span>
+                                                        <span class="badge" [ngClass]="getBadgeClass(p.stato)">{{ p.stato }}</span>
                                                     </span>
                                                 </div>
                                             </div>
@@ -267,13 +279,13 @@
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="editFirstname" class="form-label">Nome</label>
-                                <input type="text" class="form-control" id="editFirstname" formControlName="nome" placeholder="Inserisci il tuo nome">
+                                <input type="text" class="form-control bg-light" id="editFirstname" [value]="profiloUtente?.nome || user?.nome" readonly>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="editLastname" class="form-label">Cognome</label>
-                                <input type="text" class="form-control" id="editLastname" formControlName="cognome" placeholder="Inserisci il tuo cognome">
+                                <input type="text" class="form-control bg-light" id="editLastname" [value]="profiloUtente?.cognome || user?.cognome" readonly>
                             </div>
                         </div>
                         <div class="col-lg-6">
@@ -291,23 +303,19 @@
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="editBirthdate" class="form-label">Data di Nascita</label>
-                                <input type="date" class="form-control" id="editBirthdate" formControlName="dataNascita">
+                                <input type="text" class="form-control bg-light" id="editBirthdate" [value]="profileData.dataNascita" readonly>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label for="editGender" class="form-label">Sesso</label>
-                                <select class="form-select" id="editGender" formControlName="sesso">
-                                    <option value="Maschio">Maschio</option>
-                                    <option value="Femmina">Femmina</option>
-                                    <option value="Altro">Altro</option>
-                                </select>
+                                <input type="text" class="form-control bg-light" id="editGender" [value]="profiloUtente?.sesso || profileData.sesso" readonly>
                             </div>
                         </div>
                         <div class="col-lg-12">
                             <div class="mb-3">
                                 <label for="editSocieta" class="form-label">Società</label>
-                                <input type="text" class="form-control" id="editSocieta" formControlName="societa" placeholder="Inserisci la tua società">
+                                <input type="text" class="form-control bg-light" id="editSocieta" [value]="profiloUtente?.societaNome || profiloUtente?.societa || user?.societa || profileData.societa" readonly>
                             </div>
                         </div>
                     </div>

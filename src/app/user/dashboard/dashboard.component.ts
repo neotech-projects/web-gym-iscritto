@@ -1,15 +1,13 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { PrenotazioneService } from '../../services/prenotazione.service';
 import { AuthService } from '../../services/auth.service';
-
-declare var bootstrap: any;
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit, AfterViewInit {
+export class DashboardComponent implements OnInit {
   bookingsCount: number = 0;
   workoutsCount: number = 0;
   prossimePrenotazioni: any[] = [];
@@ -24,10 +22,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadStats();
     this.loadProssimePrenotazioni();
-  }
-
-  ngAfterViewInit(): void {
-    // Nessuna inizializzazione necessaria - gestiamo gli accordion manualmente
   }
 
   toggleAccordion(id: string): void {
@@ -61,8 +55,13 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   loadStats(): void {
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) {
+      this.loading = false;
+      return;
+    }
     this.loading = true;
-    this.prenotazioneService.getStatistiche().subscribe({
+    this.prenotazioneService.getStatistiche(utenteId).subscribe({
       next: (stats) => {
         if (stats) {
           this.bookingsCount = stats.prenotazioni || 0;
@@ -81,7 +80,12 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   loadProssimePrenotazioni(): void {
-    this.prenotazioneService.getProssimePrenotazioni().subscribe({
+    const utenteId = this.authService.getCurrentUser()?.id;
+    if (utenteId == null) {
+      this.prossimePrenotazioni = [];
+      return;
+    }
+    this.prenotazioneService.getProssimePrenotazioni(utenteId).subscribe({
       next: (prenotazioni) => {
         if (prenotazioni && Array.isArray(prenotazioni)) {
           this.prossimePrenotazioni = prenotazioni;
@@ -145,16 +149,32 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getBadgeClass(index: number): string {
-    const classes = [
-      'bg-primary-subtle text-primary',
-      'bg-info-subtle text-info',
-      'bg-success-subtle text-success',
-      'bg-warning-subtle text-warning',
-      'bg-danger-subtle text-danger',
-      'bg-secondary-subtle text-secondary'
-    ];
-    return classes[index % classes.length];
+  formatOrario(oraInizio: string): string {
+    if (!oraInizio) return '–';
+    const t = (oraInizio + '').trim();
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return t.substring(0, 5);
+    try {
+      const d = new Date(t);
+      if (!isNaN(d.getTime())) {
+        const h = d.getHours().toString().padStart(2, '0');
+        const m = d.getMinutes().toString().padStart(2, '0');
+        return `${h}:${m}`;
+      }
+    } catch { }
+    return t;
+  }
+
+  getOrario(prenotazione: any): string {
+    return prenotazione?.oraInizio ?? (prenotazione as any)?.ora_inizio ?? '';
+  }
+
+  getDurata(prenotazione: any): string {
+    const min = prenotazione?.durataMinuti ?? (prenotazione as any)?.durata_minuti;
+    if (min == null) return '–';
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
   }
 }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -12,12 +12,14 @@ export interface User {
   nome: string;
   cognome: string;
   societa?: string;
+  societaNome?: string;
 }
 
 export interface ProfiloUtente extends User {
   telefono?: string;
   dataNascita?: string;
   sesso?: string;
+  societaNome?: string;
 }
 
 export interface AttivitaRecente {
@@ -33,7 +35,7 @@ export interface AttivitaRecente {
 })
 export class AuthService {
   private apiUrl = environment.apiUrl;
-  private apiServerUrl = environment.apiServerUrl;
+  // private apiServerUrl = environment.apiServerUrl;
   private currentUser: User | null = null;
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
@@ -49,28 +51,22 @@ export class AuthService {
     }
   }
 
-  login(username: string, password: string, rememberMe: boolean = false): Observable<any> {
-    const url = `${this.apiServerUrl}api/login`;
-    return this.http.post<any>(url, { username, password }).pipe(
+  login(email: string, password: string, rememberMe: boolean = false): Observable<any> {
+    const url = `${this.apiUrl}/api/utenti/login`;
+    return this.http.post<any>(url, { email, password }).pipe(
       tap(response => {
         const token = response.token ?? response.accessToken ?? response.jwt;
-        const user = response.user ?? response;
-        if (token && user) {
-          this.setAuthData(token, this.normalizeUser(user, username), rememberMe);
-        }
+        if (!token || !response.email) return;
+        const user: User = {
+          id: response.id ?? 0,
+          username: response.email,
+          email: response.email,
+          nome: response.nome ?? '',
+          cognome: response.cognome ?? ''
+        };
+        this.setAuthData(token, user, rememberMe);
       })
     );
-  }
-
-  private normalizeUser(data: any, username: string): User {
-    return {
-      id: data.id ?? 0,
-      username: data.username ?? username,
-      email: data.email ?? (username.includes('@') ? username : username + '@example.com'),
-      nome: data.nome ?? data.firstName ?? '',
-      cognome: data.cognome ?? data.lastName ?? '',
-      societa: data.societa
-    };
   }
 
   register(userData: any): Observable<any> {
@@ -83,7 +79,7 @@ export class AuthService {
     localStorage.removeItem(this.USER_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/utenti/login']);
   }
 
   isAuthenticated(): boolean {
@@ -127,12 +123,26 @@ export class AuthService {
     });
   }
 
-  getProfiloUtente(): Observable<ProfiloUtente> {
-    return this.http.get<ProfiloUtente>(`${this.apiUrl}/utente/profilo`);
+  getProfiloUtente(utenteId: number): Observable<ProfiloUtente> {
+    const params = new HttpParams().set('utenteId', String(utenteId));
+    return this.http.get<ProfiloUtente>(`${this.apiUrl}/api/utenti/profilo`, { params });
   }
 
   getAttivitaRecenti(): Observable<AttivitaRecente[]> {
     return this.http.get<AttivitaRecente[]>(`${this.apiUrl}/utente/attivita`);
+  }
+
+  cambiaPassword(utenteId: number, vecchiaPassword: string, nuovaPassword: string): Observable<any> {
+    const params = new HttpParams().set('utenteId', String(utenteId));
+    return this.http.put<any>(`${this.apiUrl}/api/utenti/cambia-password`, { vecchiaPassword, nuovaPassword}, { params });
+  }
+
+  modificaProfilo(utenteId: number, email: string, telefono: string): Observable<any> {
+    const params = new HttpParams().set('utenteId', String(utenteId));
+    return this.http.put<any>(`${this.apiUrl}/api/utenti/modifica-profilo`, {
+      email,
+      telefono
+    }, { params });
   }
 }
 

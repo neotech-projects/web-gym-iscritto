@@ -26,6 +26,8 @@
                 </div>
             </div>
             <div class="card-body">
+                <div *ngIf="loading" class="text-center py-4 text-muted">Caricamento...</div>
+                <div *ngIf="!loading">
                 <!-- Tabella Desktop -->
                 <div class="table-responsive d-lg-block d-none">
                     <table class="table table-bordered table-nowrap align-middle mb-0">
@@ -41,8 +43,8 @@
                         <tbody>
                             <tr *ngFor="let booking of filteredBookings">
                                 <td>{{ formatDate(booking.data) }}</td>
-                                <td>{{ booking.oraInizio }} - {{ booking.oraFine }}</td>
-                                <td>{{ calculateDuration(booking.oraInizio, booking.oraFine) }}</td>
+                                <td>{{ formatOrario(getOrario(booking)) }}</td>
+                                <td>{{ getDurata(booking) }}</td>
                                 <td>
                                     <span *ngIf="isFuture(booking)" class="badge bg-success-subtle text-success">Confermata</span>
                                     <span *ngIf="!isFuture(booking)" class="badge bg-secondary-subtle text-secondary">Completata</span>
@@ -70,7 +72,7 @@
                                 [attr.aria-controls]="'booking' + booking.id">
                             <div>
                                 <div class="fw-semibold">{{ formatDate(booking.data) }}</div>
-                                <div class="text-muted small">{{ booking.oraInizio }} - {{ booking.oraFine }}</div>
+                                <div class="text-muted small">{{ formatOrario(getOrario(booking)) }}</div>
                             </div>
                             <div>
                                 <span *ngIf="isFuture(booking)" class="badge bg-success-subtle text-success">Confermata</span>
@@ -87,11 +89,11 @@
                                 </div>
                                 <div class="booking-info-row">
                                     <span class="booking-info-label">Orario</span>
-                                    <span class="booking-info-value">{{ booking.oraInizio }} - {{ booking.oraFine }}</span>
+                                    <span class="booking-info-value">{{ formatOrario(getOrario(booking)) }}</span>
                                 </div>
                                 <div class="booking-info-row">
                                     <span class="booking-info-label">Durata</span>
-                                    <span class="booking-info-value">{{ calculateDuration(booking.oraInizio, booking.oraFine) }}</span>
+                                    <span class="booking-info-value">{{ getDurata(booking) }}</span>
                                 </div>
                                 <div class="booking-info-row">
                                     <span class="booking-info-label">Stato</span>
@@ -116,8 +118,9 @@
                         <i class="ri-calendar-line display-4 text-muted"></i>
                         <h5 class="mt-3">Nessuna prenotazione trovata</h5>
                         <p class="text-muted">Non ci sono prenotazioni da visualizzare.</p>
-                        <a routerLink="/dashboard/prenota" class="btn btn-primary">Crea una Prenotazione</a>
+                        <a routerLink="/prenota" class="btn btn-primary">Crea una Prenotazione</a>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

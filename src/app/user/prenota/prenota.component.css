@@ -24,8 +24,22 @@
     background-color: rgba(240, 242, 245, 0.3) !important;
 }
 
-/* Vista mensile - badge compatti come prima e centrati */
-.fc-daygrid .fc-event {
+/* Nascondi TUTTI gli eventi tranne il primo - regola comune a desktop e mobile */
+.fc-daygrid-day-events > .fc-daygrid-event:nth-child(n+2):not(.fc-daygrid-more-link) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    pointer-events: none !important;
+}
+
+/* ========== DESKTOP: solo quando il wrapper ha .calendar-desktop (niente media query) ========== */
+#calendar.calendar-desktop .fc-daygrid .fc-event {
     font-size: 0.75em !important;
     opacity: 1 !important;
     padding: 2px 6px !important;
@@ -40,44 +54,37 @@
     text-overflow: ellipsis !important;
     display: inline-block !important;
 }
-
-/* IMPORTANTE: Mostra solo un badge per giorno nella vista mensile - badge compatti e perfettamente centrati */
-/* DESKTOP ONLY - non applicare su mobile */
-@media (min-width: 768px) {
-    .fc-daygrid-day-events {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 2px !important;
-        max-height: 30px !important;
-        overflow: hidden !important;
-        position: absolute !important;
-        bottom: 2px !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-}
-
-/* Nascondi TUTTI gli eventi tranne il primo - regola molto specifica */
-.fc-daygrid-day-events > .fc-daygrid-event:nth-child(n+2):not(.fc-daygrid-more-link) {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    height: 0 !important;
-    width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
+#calendar.calendar-desktop .fc-daygrid-day-events {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    height: 26px !important;
+    max-height: 26px !important;
+    min-height: 26px !important;
+    overflow: hidden !important;
     position: absolute !important;
-    left: -9999px !important;
-    pointer-events: none !important;
+    bottom: 2px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
-
-/* Mostra solo il primo evento - badge compatto e perfettamente centrato */
-.fc-daygrid-day-events > .fc-daygrid-event:first-child:not(.fc-daygrid-more-link) {
+#calendar.calendar-desktop .fc-daygrid-day,
+#calendar.calendar-desktop .fc-daygrid-day-frame {
+    overflow: hidden !important;
+    position: relative !important;
+}
+#calendar.calendar-desktop .fc-daygrid-day-bottom {
+    position: relative !important;
+    flex: 0 0 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    overflow: hidden !important;
+}
+#calendar.calendar-desktop .fc-daygrid-day-events > .fc-daygrid-event:first-child:not(.fc-daygrid-more-link) {
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -92,6 +99,111 @@
     line-height: 1.3 !important;
     align-self: center !important;
     flex-shrink: 0 !important;
+}
+
+/* ========== MOBILE: solo quando il wrapper ha .calendar-mobile (niente media query) ========== */
+#calendar.calendar-mobile .fc-daygrid-event:not(.fc-daygrid-more-link) {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-width: calc(100% - 8px) !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 18px !important;
+    margin: 0 auto !important;
+    padding: 2px 4px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+    font-size: 0.6rem !important;
+    box-sizing: border-box !important;
+    flex-shrink: 1 !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day-events > .fc-daygrid-event:first-child:not(.fc-daygrid-more-link) {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-width: calc(100% - 8px) !important;
+    max-height: 18px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 2px 4px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+    font-size: 0.6rem !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day .fc-daygrid-day-events,
+#calendar.calendar-mobile .fc-daygrid-day-frame .fc-daygrid-day-events,
+#calendar.calendar-mobile .fc-daygrid-day-bottom .fc-daygrid-day-events,
+#calendar.calendar-mobile .fc-daygrid-day-events {
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-height: 20px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 4px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 1 !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day,
+#calendar.calendar-mobile .fc-daygrid-day-frame,
+#calendar.calendar-mobile .fc-daygrid-day-bottom {
+    position: relative !important;
+    overflow: hidden !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day {
+    min-height: 50px !important;
+    contain: layout style paint !important;
+    isolation: isolate !important;
+}
+#calendar.calendar-mobile .fc-daygrid-event:not(.fc-daygrid-more-link) .fc-event-title,
+#calendar.calendar-mobile .fc-daygrid-event .fc-event-title {
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.6rem !important;
+    line-height: 1.2 !important;
+    display: block !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day-frame {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 2px !important;
+    min-height: 50px !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day-bottom {
+    position: relative !important;
+    min-height: 14px !important;
+    max-height: 20px !important;
+    padding: 0 4px !important;
+    margin-top: 2px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+#calendar.calendar-mobile .fc-daygrid-day-bottom .fc-daygrid-day-events {
+    position: relative !important;
+    margin: 0 auto !important;
+    max-height: 20px !important;
 }
 
 /* Nascondi il link "+X more" quando c'è solo un evento visibile (desktop) */
@@ -274,12 +386,7 @@ body.modal-open {
 
 /* Stili responsive per mobile */
 @media (max-width: 767px) {
-    /* MOBILE: Nascondi i badge normali e mostra solo il link "+X more" */
-    .fc-daygrid-day-events .fc-daygrid-event:first-child:not(.fc-daygrid-more-link) {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-    }
+    /* MOBILE: badge visibile ma compatto e contenuto nella cella (no overflow su altri slot) */
     
     .col-xl-3 {
         margin-bottom: 1rem;
@@ -484,41 +591,7 @@ body.modal-open {
         -webkit-overflow-scrolling: touch;
     }
     
-    /* CRITICO: Sovrascrivi IMMEDIATAMENTE il posizionamento assoluto del desktop per gli eventi */
-    /* Regole MOLTO specifiche per assicurarsi che gli eventi siano nella cella corretta */
-    .fc-daygrid-day .fc-daygrid-day-events,
-    .fc-daygrid-day-frame .fc-daygrid-day-events,
-    .fc-daygrid-day-bottom .fc-daygrid-day-events,
-    .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-        transform: none !important;
-        margin: 0 !important;
-        padding: 0 4px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    
-    /* Assicura che NESSUN contenitore padre abbia posizionamento assoluto che possa spostare gli eventi */
-    .fc-daygrid-day,
-    .fc-daygrid-day-frame,
-    .fc-daygrid-day-bottom {
-        position: relative !important;
-        overflow: hidden !important;
-    }
-    
-    /* IMPORTANTE: Forza che gli eventi siano nel flusso normale del DOM, non posizionati assolutamente */
-    .fc-daygrid-day-frame .fc-daygrid-day-bottom .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-        transform: none !important;
-    }
+    /* Badge/celle calendario in mobile: gestiti da #calendar.calendar-mobile (senza media query) */
     
     /* Toolbar mobile migliorata */
     .fc-header-toolbar {
@@ -590,17 +663,6 @@ body.modal-open {
         font-size: 0.9rem;
     }
     
-    /* MOBILE: Nascondi il badge principale e mostra solo il link "1 prenotazione" */
-    .fc-daygrid-event:not(.fc-daygrid-more-link) {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
     /* MOBILE: Mostra il link "+X more" anche quando c'è solo un evento - RESPONSIVE RELATIVE */
     .fc-daygrid-more-link {
         display: inline-block !important;
@@ -629,319 +691,7 @@ body.modal-open {
         flex-shrink: 1 !important;
     }
     
-    .fc-daygrid-event-title {
-        font-size: 0.5rem !important;
-        padding: 0 !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        line-height: 12px !important;
-        max-width: 100% !important;
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        height: 12px !important;
-    }
-    
-    /* Limita la lunghezza del testo del badge su mobile */
-    .fc-daygrid-event .fc-event-title {
-        max-width: 100% !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        font-size: 0.5rem !important;
-        line-height: 12px !important;
-    }
-    
-    /* Assicura che il badge non possa uscire dalla cella */
-    .fc-daygrid-day-events .fc-daygrid-event {
-        max-width: calc(100% - 8px) !important;
-        width: auto !important;
-    }
-    
-    /* Forza il contenimento del badge nella cella */
-    .fc-daygrid-day-frame > * {
-        overflow: hidden !important;
-    }
-    
-        /* CRITICO: Sovrascrivi COMPLETAMENTE il posizionamento assoluto del desktop su mobile */
-    .fc-daygrid-day .fc-daygrid-day-events,
-    .fc-daygrid-day-frame .fc-daygrid-day-events,
-    .fc-daygrid-day-bottom .fc-daygrid-day-events,
-    .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-        transform: none !important;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: center !important;
-        max-height: 14px !important;
-        overflow: hidden !important;
-        width: 100% !important;
-        padding: 0 4px !important;
-        margin: 0 !important;
-        z-index: 5 !important;
-        box-sizing: border-box !important;
-        flex-shrink: 0 !important;
-        height: 14px !important;
-        min-height: 14px !important;
-    }
-    
-    /* Forza il contenitore degli eventi a essere nella parte inferiore della cella MA dentro */
-    .fc-daygrid-day-bottom .fc-daygrid-day-events {
-        position: relative !important;
-        margin: 0 auto !important;
-        height: 14px !important;
-        max-height: 14px !important;
-    }
-    
-    /* Nascondi TUTTI gli eventi tranne il primo */
-    .fc-daygrid-day-events > .fc-daygrid-event:nth-child(n+2) {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
-    }
-    
-    /* MOBILE: Nascondi il primo evento (badge principale) */
-    .fc-daygrid-day-events > .fc-daygrid-event:first-child:not(.fc-daygrid-more-link) {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* MOBILE: Mostra il link "+X more" come primo elemento visibile */
-    .fc-daygrid-day-events > .fc-daygrid-more-link:first-child,
-    .fc-daygrid-day-events > .fc-daygrid-event:first-child + .fc-daygrid-more-link {
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    /* Nascondi anche eventuali eventi duplicati */
-    .fc-daygrid-day .fc-daygrid-day-events .fc-daygrid-event + .fc-daygrid-event:not(.fc-daygrid-more-link) {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    
-    /* MOBILE: Mostra sempre il link "+X more" anche con un solo evento */
-    .fc-daygrid-day-events .fc-daygrid-more-link {
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    /* Celle del calendario più compatte - MOBILE - RESPONSIVE */
-    .fc-daygrid-day {
-        min-height: 50px !important;
-        position: relative !important;
-        overflow: hidden !important;
-        contain: layout style !important;
-    }
-    
-    .fc-daygrid-day-frame {
-        position: relative !important;
-        min-height: 50px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        padding: 2px !important;
-        padding-bottom: 2px !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-        justify-content: flex-start !important;
-        contain: layout style !important;
-    }
-    
-    /* Assicura che gli eventi siano nel DOM corretto della cella */
-    .fc-daygrid-day .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-    }
-    
-    /* Posiziona il link SUBITO DOPO il numero del giorno, NON in fondo - RESPONSIVE */
-    .fc-daygrid-day-bottom {
-        min-height: 14px !important;
-        max-height: 14px !important;
-        padding: 0 4px !important;
-        margin: 2px 0 0 0 !important;
-        margin-top: 2px !important;
-        margin-bottom: 0 !important;
-        overflow: hidden !important;
-        flex-shrink: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 100% !important;
-        position: relative !important;
-        box-sizing: border-box !important;
-        height: 14px !important;
-        max-width: 100% !important;
-    }
-    
-    /* Rimuovi margin-top: auto che spinge fuori dalla cella */
-    .fc-daygrid-day-frame .fc-daygrid-day-bottom {
-        order: 2 !important;
-        margin-top: 2px !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    .fc-daygrid-day {
-        position: relative !important;
-    }
-    
-    .fc-daygrid-day-number {
-        font-size: 0.85rem !important;
-        padding: 2px 4px !important;
-        position: relative !important;
-        z-index: 1 !important;
-    }
-    
-    /* Assicura che il link sia sempre sopra altri elementi e non esca - RESPONSIVE */
-    .fc-daygrid-day-events .fc-daygrid-more-link {
-        z-index: 10 !important;
-        position: relative !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        margin: 0 auto !important;
-    }
-    
-    /* Assicura che le celle non permettano overflow - RESPONSIVE */
-    .fc-daygrid-day-frame {
-        overflow: hidden !important;
-        position: relative !important;
-    }
-    
-    .fc-daygrid-day {
-        overflow: hidden !important;
-        position: relative !important;
-    }
-    
-    /* Assicura che il testo del link non esca */
-    .fc-daygrid-more-link .fc-more-link-text {
-        max-width: 100% !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        display: inline-block !important;
-    }
-    
-    /* Forza il contenimento responsive del link nella cella */
-    .fc-daygrid-day-events {
-        contain: layout !important;
-        isolation: isolate !important;
-    }
-    
-    /* IMPORTANTE: Sovrascrivi qualsiasi posizionamento assoluto di FullCalendar su mobile - REGOLE MOLTO SPECIFICHE */
-    .fc-daygrid-day-frame .fc-daygrid-day-events,
-    .fc-daygrid-day .fc-daygrid-day-frame .fc-daygrid-day-events,
-    .fc-daygrid-day-bottom .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-        transform: none !important;
-        margin: 0 auto !important;
-    }
-    
-    /* Assicura che NESSUN contenitore di eventi abbia posizionamento assoluto su mobile */
-    .fc-daygrid-day > .fc-daygrid-day-events,
-    .fc-daygrid-day-frame > .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-    }
-    
-    /* Forza il contenitore bottom a essere SUBITO DOPO il numero */
-    .fc-daygrid-day-frame {
-        justify-content: flex-start !important;
-        padding: 2px !important;
-        padding-bottom: 2px !important;
-    }
-    
-    .fc-daygrid-day-bottom {
-        margin-top: 2px !important;
-        align-self: center !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Forza il layout responsive: numero in alto, eventi SUBITO DOPO */
-    .fc-daygrid-day-top {
-        flex-shrink: 0 !important;
-        order: 1 !important;
-    }
-    
-    .fc-daygrid-day-number {
-        order: 1 !important;
-    }
-    
-    .fc-daygrid-day-bottom {
-        order: 2 !important;
-        margin-top: 2px !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Assicura che il contenitore degli eventi sia nel flusso normale SUBITO DOPO il numero */
-    .fc-daygrid-day-bottom .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-        margin: 0 auto !important;
-        height: 14px !important;
-        max-height: 14px !important;
-    }
-    
-    /* Rimuovi qualsiasi posizionamento assoluto che potrebbe spostare il contenitore */
-    .fc-daygrid-day-frame > .fc-daygrid-day-events {
-        position: relative !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        top: auto !important;
-    }
-    
-    /* IMPORTANTE: Assicura che il frame abbia padding per contenere tutto */
-    .fc-daygrid-day-frame {
-        padding: 2px !important;
-        padding-bottom: 2px !important;
-    }
-    
-    /* Assicura che il bottom sia SUBITO DOPO il numero, non in fondo */
-    .fc-daygrid-day-bottom {
-        position: relative !important;
-        bottom: auto !important;
-        margin-top: 2px !important;
-        margin-bottom: 0 !important;
-    }
-    
-    /* Assicura che il contenitore degli eventi sia completamente dentro la cella */
-    .fc-daygrid-day-frame .fc-daygrid-day-bottom {
-        margin-top: 2px !important;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
+    /* Layout badge/celle daygrid: gestito da #calendar.calendar-mobile */
     
     /* Vista settimanale/giornaliera mobile */
     .fc-timegrid-slot {

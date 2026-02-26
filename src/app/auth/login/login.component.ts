@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  username: string = '';
+  email: string = '';
   password: string = '';
   rememberMe: boolean = false;
   showPassword: boolean = false;
@@ -26,15 +26,15 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    if (!this.username || !this.password) {
-      this.error = 'Inserisci username e password';
+    if (!this.email || !this.password) {
+      this.error = 'Inserisci email e password';
       return;
     }
 
     this.loading = true;
     this.error = null;
 
-    this.authService.login(this.username, this.password, this.rememberMe).subscribe({
+    this.authService.login(this.email, this.password, this.rememberMe).subscribe({
       next: (response) => {
         // Verifica che l'autenticazione sia stata salvata
         if (this.authService.isAuthenticated()) {
