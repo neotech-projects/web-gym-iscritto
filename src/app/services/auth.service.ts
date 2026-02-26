@@ -139,10 +139,8 @@ export class AuthService {
 
   modificaProfilo(utenteId: number, email: string, telefono: string): Observable<any> {
     const params = new HttpParams().set('utenteId', String(utenteId));
-    return this.http.put<any>(`${this.apiUrl}/api/utenti/modifica-profilo`, {
-      email,
-      telefono
-    }, { params });
+    return this.http.put<any>(`${this.apiUrl}/api/utenti/modifica-profilo`, { email, telefono }, { params });
   }
+  
 }
 
