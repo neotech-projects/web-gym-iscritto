@@ -44,10 +44,19 @@ export class AuthService {
     private http: HttpClient,
     private router: Router
   ) {
-    // Recupera utente da localStorage o sessionStorage se presente
-    const savedUser = localStorage.getItem(this.USER_KEY) || sessionStorage.getItem(this.USER_KEY);
+    this.loadUserFromStorage();
+  }
+
+  private loadUserFromStorage(): void {
+    const savedUser = localStorage.getItem(this.USER_KEY);
     if (savedUser) {
-      this.currentUser = JSON.parse(savedUser);
+      try {
+        this.currentUser = JSON.parse(savedUser);
+      } catch {
+        this.currentUser = null;
+      }
+    } else {
+      this.currentUser = null;
     }
   }
 
@@ -82,21 +91,28 @@ export class AuthService {
     this.router.navigate(['/utenti/login']);
   }
 
+  /** Verifica che in localStorage esistano sia il token sia i dati utente (con id). */
   isAuthenticated(): boolean {
-    const token = localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
-    const user = localStorage.getItem(this.USER_KEY) || sessionStorage.getItem(this.USER_KEY);
-    
-    if (token && user) {
-      if (!this.currentUser) {
-        this.currentUser = JSON.parse(user);
-      }
+    return this.hasValidAuth();
+  }
+
+  /** Controllo stretto: token e utente (con id) devono essere presenti in localStorage. */
+  hasValidAuth(): boolean {
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    const userJson = localStorage.getItem(this.USER_KEY);
+    if (!token || !userJson) return false;
+    try {
+      const user = JSON.parse(userJson) as User;
+      if (user == null || (user as any).id == null) return false;
+      if (!this.currentUser) this.currentUser = user;
       return true;
+    } catch {
+      return false;
     }
-    
-    return false;
   }
 
   getCurrentUser(): User | null {
+    if (!this.currentUser) this.loadUserFromStorage();
     return this.currentUser;
   }
 
@@ -104,15 +120,21 @@ export class AuthService {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  private setAuthData(token: string, user: User, rememberMe: boolean): void {
+  /** Pulisce auth e reindirizza al login. Usato da guard e interceptor quando i dati non sono validi. */
+  clearAuthAndRedirectToLogin(): void {
+    this.currentUser = null;
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
+    this.router.navigate(['/utenti/login']);
+  }
+
+  private setAuthData(token: string, user: User, _rememberMe: boolean): void {
     this.currentUser = user;
-    if (rememberMe) {
-      localStorage.setItem(this.TOKEN_KEY, token);
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    } else {
-      sessionStorage.setItem(this.TOKEN_KEY, token);
-      sessionStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    }
+    // Salvataggio sempre in localStorage: token, nome, cognome e dati utente senza scadenza
+    localStorage.setItem(this.TOKEN_KEY, token);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
   resetPassword(email: string): Observable<any> {

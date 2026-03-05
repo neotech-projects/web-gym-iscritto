@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { PrenotazioneService } from '../../services/prenotazione.service';
 
 @Component({
   selector: 'app-accesso-porta',
@@ -7,60 +9,89 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./accesso-porta.component.css']
 })
 export class AccessoPortaComponent implements OnInit {
-  scenario: number = 0;
+  @ViewChild('checkForm') checkFormRef!: ElementRef<HTMLFormElement>;
+
+  /** Stato: 'loading' = verifica in corso, 'result' = esito da backend, 'no-user' = non loggato, 'no-uuid' = nessun QR */
+  state: 'loading' | 'result' | 'no-user' | 'no-uuid' = 'no-uuid';
+  /** Esito dalla redirect: 'ok' | 'ko' */
+  esito: 'ok' | 'ko' | null = null;
+  /** Messaggio dalla redirect (es. "Porta aperta" o messaggio di errore) */
+  messaggio: string = '';
+
   badgeClass: string = 'badge-success';
   badgeText: string = 'PORTA APERTA';
   imagePath: string = 'assets/images/portaaperta.png';
-  message: string = 'Accesso autorizzato. Benvenuto in palestra!';
+  message: string = '';
 
-  constructor(private route: ActivatedRoute) { }
+  /** URL per il form POST (check-prenotazione); impostato quando abbiamo uuid + utenteId */
+  checkFormAction: string = '';
+
+  constructor(
+    private route: ActivatedRoute,
+    private authService: AuthService,
+    private prenotazioneService: PrenotazioneService
+  ) {}
 
   ngOnInit(): void {
-    // Controlla se c'è un parametro QR code nella route (per future implementazioni)
-    // Per ora simula le diverse casistiche in modo random
-    this.checkAccess();
+    this.route.queryParams.subscribe(params => {
+      const uuid = params['uuid'] ?? params['UUID'] ?? null;
+      const esitoParam = params['esito'];
+      const messaggioParam = params['messaggio'] ?? '';
+
+      // Arrivo dalla redirect del backend: mostra esito e messaggio
+      if (esitoParam === 'ok' || esitoParam === 'ko') {
+        this.state = 'result';
+        this.esito = esitoParam;
+        this.messaggio = decodeURIComponent(messaggioParam || '');
+        this.applyResultView();
+        return;
+      }
+
+      // Arrivo con solo uuid (scansione QR): avvia verifica
+      if (uuid) {
+        const utenteId = this.authService.getCurrentUser()?.id ?? null;
+        if (utenteId == null) {
+          this.state = 'no-user';
+          this.message = 'Effettua il login per verificare l\'accesso.';
+          this.badgeClass = 'badge-warning';
+          this.badgeText = 'ACCESSO NEGATO';
+          this.imagePath = 'assets/images/portachiusa.png';
+          return;
+        }
+        this.state = 'loading';
+        this.checkFormAction = this.prenotazioneService.getCheckPrenotazioneUrl(uuid, utenteId);
+        // Submit del form alla prossima tick così il template ha il form con [action] aggiornato
+        setTimeout(() => this.submitCheckForm(), 0);
+        return;
+      }
+
+      // Nessun uuid: invito a scansionare il QR
+      this.state = 'no-uuid';
+      this.message = 'Scansiona il QR code all\'ingresso per verificare l\'accesso.';
+      this.badgeClass = 'badge-warning';
+      this.badgeText = 'IN ATTESA';
+      this.imagePath = 'assets/images/portachiusa.png';
+    });
   }
 
-  checkAccess(): void {
-    // Genera un numero random tra 0 e 3 per simulare diverse casistiche
-    // 0 = Accesso consentito (utente registrato + prenotazione valida)
-    // 1 = Utente non registrato
-    // 2 = Prenotazione non presente
-    // 3 = Troppo presto (prenotazione tra 20 minuti)
-    this.scenario = Math.floor(Math.random() * 4);
-    
-    switch(this.scenario) {
-      case 0:
-        // Accesso consentito
-        this.badgeClass = 'badge-success';
-        this.badgeText = 'PORTA APERTA';
-        this.imagePath = 'assets/images/portaaperta.png';
-        this.message = 'Accesso abilitato. Benvenuto in palestra!';
-        break;
-        
-      case 1:
-        // Utente non registrato
-        this.badgeClass = 'badge-warning';
-        this.badgeText = 'PORTA CHIUSA';
-        this.imagePath = 'assets/images/portachiusa.png';
-        this.message = 'Utente non abilitato. Contatta la reception per maggiori informazioni.';
-        break;
-        
-      case 2:
-        // Prenotazione non presente
-        this.badgeClass = 'badge-warning';
-        this.badgeText = 'PORTA CHIUSA';
-        this.imagePath = 'assets/images/portachiusa.png';
-        this.message = 'Nessuna prenotazione trovata per questo orario. Verifica la tua prenotazione.';
-        break;
-        
-      case 3:
-        // Troppo presto (prenotazione tra 20 minuti)
-        this.badgeClass = 'badge-warning';
-        this.badgeText = 'PORTA CHIUSA';
-        this.imagePath = 'assets/images/portachiusa.png';
-        this.message = 'La tua prenotazione è tra 20 minuti. Accedi al momento giusto.';
-        break;
+  private applyResultView(): void {
+    if (this.esito === 'ok') {
+      this.badgeClass = 'badge-success';
+      this.badgeText = 'PORTA APERTA';
+      this.imagePath = 'assets/images/portaaperta.png';
+      this.message = this.messaggio || 'Accesso autorizzato. Benvenuto in palestra!';
+    } else {
+      this.badgeClass = 'badge-warning';
+      this.badgeText = 'PORTA CHIUSA';
+      this.imagePath = 'assets/images/portachiusa.png';
+      this.message = this.messaggio || 'Accesso non autorizzato.';
+    }
+  }
+
+  private submitCheckForm(): void {
+    const form = this.checkFormRef?.nativeElement;
+    if (form && this.checkFormAction) {
+      form.submit();
     }
   }
 }

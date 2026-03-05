@@ -53,5 +53,14 @@ export class PrenotazioneService {
   getStoricoPrenotazioni(utenteId: number): Observable<Prenotazione[]> {
     return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/prenotazioni/storico`, { params: { utenteId } });
   }
+
+  /**
+   * Restituisce l'URL per la verifica prenotazione (check QR).
+   * Usato dal form POST che invia uuid e utenteId; il backend reindirizza poi a accesso-porta con esito e messaggio.
+   */
+  getCheckPrenotazioneUrl(uuid: string, utenteId: number): string {
+    const params = new URLSearchParams({ uuid, utenteId: String(utenteId) });
+    return `${this.apiUrl}/api/prenotazioni/check-prenotazione?${params.toString()}`;
+  }
 }
 
