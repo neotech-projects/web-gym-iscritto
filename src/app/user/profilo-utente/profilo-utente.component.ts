@@ -132,8 +132,9 @@ export class ProfiloUtenteComponent implements OnInit {
 
   loadActivities(): void {
     const utenteId = this.authService.getCurrentUser()?.id;
-    if (utenteId == null) return;
-    this.prenotazioneService.getStoricoPrenotazioni(utenteId).subscribe(prenotazioni => {
+    const authToken = this.authService.getToken();
+    if (utenteId == null || !authToken) return;
+    this.prenotazioneService.getStoricoPrenotazioni(utenteId, authToken).subscribe(prenotazioni => {
       this.storicoPrenotazioni = Array.isArray(prenotazioni) ? prenotazioni : [];
       this.storicoPrenotazioni.forEach(p => this.openActivityAccordions['activity' + p.id] = false);
     });

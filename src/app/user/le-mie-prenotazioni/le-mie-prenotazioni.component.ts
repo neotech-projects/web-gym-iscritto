@@ -28,13 +28,14 @@ export class LeMiePrenotazioniComponent implements OnInit {
 
   loadBookings(): void {
     const utenteId = this.authService.getCurrentUser()?.id;
-    if (utenteId == null) {
+    const authToken = this.authService.getToken();
+    if (utenteId == null || !authToken) {
       this.bookings = [];
       this.filterBookings(this.currentFilter);
       return;
     }
     this.loading = true;
-    this.prenotazioneService.getStoricoPrenotazioni(utenteId).pipe(
+    this.prenotazioneService.getStoricoPrenotazioni(utenteId, authToken).pipe(
       finalize(() => this.loading = false)
     ).subscribe({
       next: (bookings) => {

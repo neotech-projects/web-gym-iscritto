@@ -50,8 +50,11 @@ export class PrenotazioneService {
     return this.http.get<PrenotazioneGenerale[]>(`${this.apiUrl}/api/prenotazioni/generali`);
   }
 
-  getStoricoPrenotazioni(utenteId: number): Observable<Prenotazione[]> {
-    return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/prenotazioni/storico`, { params: { utenteId } });
+  getStoricoPrenotazioni(utenteId: number, authToken: string): Observable<Prenotazione[]> {
+    return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/prenotazioni/storico`, {
+      params: { utenteId },
+      headers: { 'X-Auth-Token': authToken }
+    });
   }
 
   /**
