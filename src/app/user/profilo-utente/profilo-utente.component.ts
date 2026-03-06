@@ -124,8 +124,9 @@ export class ProfiloUtenteComponent implements OnInit {
 
   loadStats(): void {
     const utenteId = this.authService.getCurrentUser()?.id;
-    if (utenteId == null) return;
-    this.prenotazioneService.getStatistiche(utenteId).subscribe(stats => {
+    const authToken = this.authService.getToken();
+    if (utenteId == null || !authToken) return;
+    this.prenotazioneService.getStatistiche(utenteId, authToken).subscribe(stats => {
       this.stats = stats;
     });
   }

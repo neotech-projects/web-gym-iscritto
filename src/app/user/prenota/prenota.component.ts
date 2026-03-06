@@ -161,9 +161,10 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     const user = this.authService.getCurrentUser();
     const userName = user ? `${user.nome} ${user.cognome}` : '';
     const utenteId = user?.id;
+    const authToken = this.authService.getToken();
 
-    const my$ = utenteId != null
-      ? this.prenotazioneService.getPrenotazioni(utenteId).pipe(catchError(() => of([])))
+    const my$ = utenteId != null && authToken
+      ? this.prenotazioneService.getPrenotazioni(utenteId, authToken).pipe(catchError(() => of([])))
       : of([]);
     const generali$ = this.prenotazioneService.getPrenotazioniGenerali().pipe(catchError(() => of([])));
 

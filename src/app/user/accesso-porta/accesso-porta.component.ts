@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PrenotazioneService } from '../../services/prenotazione.service';
@@ -9,8 +9,6 @@ import { PrenotazioneService } from '../../services/prenotazione.service';
   styleUrls: ['./accesso-porta.component.css']
 })
 export class AccessoPortaComponent implements OnInit {
-  @ViewChild('checkForm') checkFormRef!: ElementRef<HTMLFormElement>;
-
   /** Stato: 'loading' = verifica in corso, 'result' = esito da backend, 'no-user' = non loggato, 'no-uuid' = nessun QR */
   state: 'loading' | 'result' | 'no-user' | 'no-uuid' = 'no-uuid';
   /** Esito dalla redirect: 'ok' | 'ko' */
@@ -22,9 +20,6 @@ export class AccessoPortaComponent implements OnInit {
   badgeText: string = 'PORTA APERTA';
   imagePath: string = 'assets/images/portaaperta.png';
   message: string = '';
-
-  /** URL per il form POST (check-prenotazione); impostato quando abbiamo uuid + utenteId */
-  checkFormAction: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -59,9 +54,28 @@ export class AccessoPortaComponent implements OnInit {
           return;
         }
         this.state = 'loading';
-        this.checkFormAction = this.prenotazioneService.getCheckPrenotazioneUrl(uuid, utenteId);
-        // Submit del form alla prossima tick così il template ha il form con [action] aggiornato
-        setTimeout(() => this.submitCheckForm(), 0);
+        const authToken = this.authService.getToken();
+        if (!authToken) {
+          this.state = 'no-user';
+          this.message = 'Sessione scaduta. Effettua nuovamente il login.';
+          this.badgeClass = 'badge-warning';
+          this.badgeText = 'ACCESSO NEGATO';
+          this.imagePath = 'assets/images/portachiusa.png';
+          return;
+        }
+        this.prenotazioneService.checkPrenotazione(uuid, utenteId, authToken).subscribe({
+          next: (redirectUrl) => {
+            if (redirectUrl) {
+              window.location.href = redirectUrl;
+            }
+          },
+          error: () => {
+            this.state = 'result';
+            this.esito = 'ko';
+            this.messaggio = 'Errore di sistema';
+            this.applyResultView();
+          }
+        });
         return;
       }
 
@@ -88,10 +102,4 @@ export class AccessoPortaComponent implements OnInit {
     }
   }
 
-  private submitCheckForm(): void {
-    const form = this.checkFormRef?.nativeElement;
-    if (form && this.checkFormAction) {
-      form.submit();
-    }
-  }
 }

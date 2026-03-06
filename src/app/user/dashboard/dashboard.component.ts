@@ -56,12 +56,13 @@ export class DashboardComponent implements OnInit {
 
   loadStats(): void {
     const utenteId = this.authService.getCurrentUser()?.id;
-    if (utenteId == null) {
+    const authToken = this.authService.getToken();
+    if (utenteId == null || !authToken) {
       this.loading = false;
       return;
     }
     this.loading = true;
-    this.prenotazioneService.getStatistiche(utenteId).subscribe({
+    this.prenotazioneService.getStatistiche(utenteId, authToken).subscribe({
       next: (stats) => {
         if (stats) {
           this.bookingsCount = stats.prenotazioni || 0;
@@ -81,11 +82,12 @@ export class DashboardComponent implements OnInit {
 
   loadProssimePrenotazioni(): void {
     const utenteId = this.authService.getCurrentUser()?.id;
-    if (utenteId == null) {
+    const authToken = this.authService.getToken();
+    if (utenteId == null || !authToken) {
       this.prossimePrenotazioni = [];
       return;
     }
-    this.prenotazioneService.getProssimePrenotazioni(utenteId).subscribe({
+    this.prenotazioneService.getProssimePrenotazioni(utenteId, authToken).subscribe({
       next: (prenotazioni) => {
         if (prenotazioni && Array.isArray(prenotazioni)) {
           this.prossimePrenotazioni = prenotazioni;

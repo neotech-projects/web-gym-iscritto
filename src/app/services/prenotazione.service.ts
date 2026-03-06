@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface Prenotazione {
@@ -25,12 +26,18 @@ export class PrenotazioneService {
 
   constructor(private http: HttpClient) { }
 
-  getPrenotazioni(utenteId: number): Observable<Prenotazione[]> {
-    return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/dashboard/mie-prenotazioni`, { params: { utenteId } });
+  getPrenotazioni(utenteId: number, authToken: string): Observable<Prenotazione[]> {
+    return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/dashboard/mie-prenotazioni`, {
+      params: { utenteId },
+      headers: { 'authToken': authToken }
+    });
   }
 
-  getProssimePrenotazioni(utenteId: number): Observable<Prenotazione[]> {
-    return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/dashboard/mie-prenotazioni`, { params: { utenteId } });
+  getProssimePrenotazioni(utenteId: number, authToken: string): Observable<Prenotazione[]> {
+    return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/dashboard/mie-prenotazioni`, {
+      params: { utenteId },
+      headers: { 'authToken': authToken }
+    });
   }
 
   creaPrenotazione(utenteId: number, prenotazione: Partial<Prenotazione>): Observable<Prenotazione> {
@@ -41,9 +48,11 @@ export class PrenotazioneService {
     return this.http.patch<Prenotazione>(`${this.apiUrl}/api/prenotazioni`, null, { params: { idPrenotazione } });
   }
 
-  getStatistiche(utenteId: number): Observable<{ prenotazioni: number; allenamenti: number }> {
-    return this.http.get<{ prenotazioni: number; allenamenti: number }>( `${this.apiUrl}/api/dashboard/statistiche`, { params: { utenteId } }
-    );
+  getStatistiche(utenteId: number, authToken: string): Observable<{ prenotazioni: number; allenamenti: number }> {
+    return this.http.get<{ prenotazioni: number; allenamenti: number }>(`${this.apiUrl}/api/dashboard/statistiche`, {
+      params: { utenteId },
+      headers: { 'authToken': authToken }
+    });
   }
 
   getPrenotazioniGenerali(): Observable<PrenotazioneGenerale[]> {
@@ -53,17 +62,28 @@ export class PrenotazioneService {
   getStoricoPrenotazioni(utenteId: number, authToken: string): Observable<Prenotazione[]> {
     return this.http.get<Prenotazione[]>(`${this.apiUrl}/api/prenotazioni/storico`, {
       params: { utenteId },
-      headers: { 'X-Auth-Token': authToken }
+      headers: { 'authToken': authToken }
     });
   }
 
   /**
-   * Restituisce l'URL per la verifica prenotazione (check QR).
-   * Usato dal form POST che invia uuid e utenteId; il backend reindirizza poi a accesso-porta con esito e messaggio.
+   * Chiama il backend per la verifica prenotazione (check QR) con authToken in header.
+   * Il backend risponde con 302 redirect; il client segue il redirect e restituisce l'URL finale (accesso-porta con esito e messaggio).
+   * Usare l'URL restituito per reindirizzare l'utente: window.location.href = url.
    */
-  getCheckPrenotazioneUrl(uuid: string, utenteId: number): string {
-    const params = new URLSearchParams({ uuid, utenteId: String(utenteId) });
-    return `${this.apiUrl}/api/prenotazioni/check-prenotazione?${params.toString()}`;
+  checkPrenotazione(uuid: string, utenteId: number, authToken: string): Observable<string> {
+    return this.http.post(
+      `${this.apiUrl}/api/prenotazioni/check-prenotazione`,
+      null,
+      {
+        params: { uuid, utenteId: String(utenteId) },
+        headers: { authToken },
+        observe: 'response',
+        responseType: 'text'
+      }
+    ).pipe(
+      map(res => res.url ?? '')
+    );
   }
 }
 
