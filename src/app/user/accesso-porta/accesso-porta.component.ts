@@ -37,7 +37,9 @@ export class AccessoPortaComponent implements OnInit {
       if (esitoParam === 'ok' || esitoParam === 'ko') {
         this.state = 'result';
         this.esito = esitoParam;
-        this.messaggio = decodeURIComponent(messaggioParam || '');
+        this.messaggio = esitoParam === 'ok'
+          ? (decodeURIComponent(messaggioParam || '') || 'Porta aperta. Benvenuto in palestra!')
+          : this.getMessageForError(decodeURIComponent(messaggioParam || ''));
         this.applyResultView();
         return;
       }
@@ -64,15 +66,16 @@ export class AccessoPortaComponent implements OnInit {
           return;
         }
         this.prenotazioneService.checkPrenotazione(uuid, utenteId, authToken).subscribe({
-          next: (redirectUrl) => {
-            if (redirectUrl) {
-              window.location.href = redirectUrl;
-            }
+          next: () => {
+            this.state = 'result';
+            this.esito = 'ok';
+            this.messaggio = 'Porta aperta. Benvenuto in palestra!';
+            this.applyResultView();
           },
-          error: () => {
+          error: (err: Error) => {
             this.state = 'result';
             this.esito = 'ko';
-            this.messaggio = 'Errore di sistema';
+            this.messaggio = this.getMessageForError(err?.message);
             this.applyResultView();
           }
         });
@@ -100,6 +103,32 @@ export class AccessoPortaComponent implements OnInit {
       this.imagePath = 'assets/images/portachiusa.png';
       this.message = this.messaggio || 'Accesso non autorizzato.';
     }
+  }
+
+  /**
+   * Mappa l'eventuale messaggio di errore del backend a un messaggio utente fisso.
+   */
+  private getMessageForError(backendMessage: string | undefined): string {
+    if (!backendMessage || !backendMessage.trim()) {
+      return 'Accesso non autorizzato.';
+    }
+    const msg = backendMessage.toLowerCase();
+    if (msg.includes('nessuna prenotazione') || msg.includes('prenotazione trovata')) {
+      return 'Nessuna prenotazione trovata.';
+    }
+    if (msg.includes('annullata')) {
+      return 'Prenotazione annullata.';
+    }
+    if (msg.includes('scaduta')) {
+      return 'Prenotazione scaduta.';
+    }
+    if (msg.includes('troppo presto')) {
+      return 'Troppo presto.Accesso consentito solo 15 minuti prima dell\'orario di inizio.';
+    }
+    if (msg.includes('uuid non valido') || msg.includes('uuid non può') || msg.includes('codice')) {
+      return 'Codice non valido.';
+    }
+    return 'Accesso non autorizzato.';
   }
 
 }

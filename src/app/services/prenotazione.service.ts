@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+
+export interface CheckPrenotazioneResult {
+  success: true;
+}
 
 export interface Prenotazione {
   id: number;
@@ -66,12 +70,7 @@ export class PrenotazioneService {
     });
   }
 
-  /**
-   * Chiama il backend per la verifica prenotazione (check QR) con authToken in header.
-   * Il backend risponde con 302 redirect; il client segue il redirect e restituisce l'URL finale (accesso-porta con esito e messaggio).
-   * Usare l'URL restituito per reindirizzare l'utente: window.location.href = url.
-   */
-  checkPrenotazione(uuid: string, utenteId: number, authToken: string): Observable<string> {
+  checkPrenotazione(uuid: string, utenteId: number, authToken: string): Observable<CheckPrenotazioneResult> {
     return this.http.post(
       `${this.apiUrl}/api/prenotazioni/check-prenotazione`,
       null,
@@ -82,7 +81,18 @@ export class PrenotazioneService {
         responseType: 'text'
       }
     ).pipe(
-      map(res => res.url ?? '')
+      map(res => {
+        if (res.status === 200 && res.body === 'ok') {
+          return { success: true as const };
+        }
+        throw new Error(res.body?.trim() || 'Errore di sistema');
+      }),
+      catchError(err => {
+        const message = (typeof err.error === 'string' && err.error.trim())
+          ? err.error.trim()
+          : (err.message || 'Errore di sistema');
+        return throwError(() => new Error(message));
+      })
     );
   }
 }
