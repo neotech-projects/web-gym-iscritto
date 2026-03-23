@@ -26,7 +26,7 @@ export interface PrenotazioneGenerale extends Prenotazione {
   providedIn: 'root'
 })
 export class PrenotazioneService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = environment.apiServerUrl;
 
   constructor(private http: HttpClient) { }
 

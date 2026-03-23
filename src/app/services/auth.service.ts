@@ -34,7 +34,7 @@ export interface AttivitaRecente {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = environment.apiServerUrl;
   // private apiServerUrl = environment.apiServerUrl;
   private currentUser: User | null = null;
   private readonly TOKEN_KEY = 'auth_token';
