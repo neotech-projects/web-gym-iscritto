@@ -5,6 +5,6 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8080',
-  apiServerUrl: 'https://gyminvestire.neotech.srl/api/iscritto-ms/'
+  apiServerUrl: 'https://gyminvestire.neotech.srl/api/iscritto-ms'
 };
 
