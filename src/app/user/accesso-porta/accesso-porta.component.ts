@@ -29,7 +29,7 @@ export class AccessoPortaComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      const uuid = params['uuid'] ?? params['UUID'] ?? null;
+      const uuid_door = params['uuid_door'] ?? params['UUID_DOOR'] ?? null;
       const esitoParam = params['esito'];
       const messaggioParam = params['messaggio'] ?? '';
 
@@ -44,9 +44,9 @@ export class AccessoPortaComponent implements OnInit {
         return;
       }
 
-      // Arrivo con solo uuid (scansione QR): avvia verifica
-      if (uuid) {
-        const utenteId = this.authService.getCurrentUser()?.id ?? null;
+      // Arrivo con solo uuid (scansione QR): legge utenteId e authToken da localStorage, poi check API
+      if (uuid_door) {
+        const { utenteId, authToken } = this.readUtenteIdAndAuthTokenFromStorage();
         if (utenteId == null) {
           this.state = 'no-user';
           this.message = 'Effettua il login per verificare l\'accesso.';
@@ -56,7 +56,6 @@ export class AccessoPortaComponent implements OnInit {
           return;
         }
         this.state = 'loading';
-        const authToken = this.authService.getToken();
         if (!authToken) {
           this.state = 'no-user';
           this.message = 'Sessione scaduta. Effettua nuovamente il login.';
@@ -65,7 +64,7 @@ export class AccessoPortaComponent implements OnInit {
           this.imagePath = 'assets/images/portachiusa.png';
           return;
         }
-        this.prenotazioneService.checkPrenotazione(uuid, utenteId, authToken).subscribe({
+        this.prenotazioneService.checkPrenotazione(uuid_door, utenteId, authToken).subscribe({
           next: () => {
             this.state = 'result';
             this.esito = 'ok';
@@ -89,6 +88,31 @@ export class AccessoPortaComponent implements OnInit {
       this.badgeText = 'IN ATTESA';
       this.imagePath = 'assets/images/portachiusa.png';
     });
+  }
+
+  /**
+   * utenteId e authToken da localStorage (chiavi `utenteId`, `authToken`);
+   * se mancanti, fallback su sessione AuthService (auth_token / current_user).
+   */
+  private readUtenteIdAndAuthTokenFromStorage(): { utenteId: number | null; authToken: string | null } {
+    const rawUid = localStorage.getItem('utenteId');
+    const rawToken = localStorage.getItem('authToken');
+
+    let utenteId: number | null = null;
+    if (rawUid != null && String(rawUid).trim() !== '') {
+      const n = Number(rawUid);
+      utenteId = Number.isFinite(n) ? n : null;
+    }
+    if (utenteId == null) {
+      utenteId = this.authService.getCurrentUser()?.id ?? null;
+    }
+
+    const authToken =
+      rawToken != null && String(rawToken).trim() !== ''
+        ? rawToken.trim()
+        : this.authService.getToken();
+
+    return { utenteId, authToken };
   }
 
   private applyResultView(): void {

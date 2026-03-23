@@ -39,6 +39,9 @@ export class AuthService {
   private currentUser: User | null = null;
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
+  /** Chiavi esplicite usate anche da accesso-porta / integrazioni */
+  private readonly UTENTE_ID_KEY = 'utenteId';
+  private readonly AUTH_TOKEN_KEY = 'authToken';
 
   constructor(
     private http: HttpClient,
@@ -52,6 +55,11 @@ export class AuthService {
     if (savedUser) {
       try {
         this.currentUser = JSON.parse(savedUser);
+        const token = localStorage.getItem(this.TOKEN_KEY);
+        if (this.currentUser?.id != null && token) {
+          localStorage.setItem(this.AUTH_TOKEN_KEY, token);
+          localStorage.setItem(this.UTENTE_ID_KEY, String(this.currentUser.id));
+        }
       } catch {
         this.currentUser = null;
       }
@@ -86,6 +94,8 @@ export class AuthService {
     this.currentUser = null;
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.UTENTE_ID_KEY);
+    localStorage.removeItem(this.AUTH_TOKEN_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
     this.router.navigate(['/utenti/login']);
@@ -125,6 +135,8 @@ export class AuthService {
     this.currentUser = null;
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem(this.UTENTE_ID_KEY);
+    localStorage.removeItem(this.AUTH_TOKEN_KEY);
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
     this.router.navigate(['/utenti/login']);
@@ -135,6 +147,8 @@ export class AuthService {
     // Salvataggio sempre in localStorage: token, nome, cognome e dati utente senza scadenza
     localStorage.setItem(this.TOKEN_KEY, token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    localStorage.setItem(this.AUTH_TOKEN_KEY, token);
+    localStorage.setItem(this.UTENTE_ID_KEY, String(user.id));
   }
 
   resetPassword(email: string): Observable<any> {

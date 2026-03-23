@@ -70,12 +70,12 @@ export class PrenotazioneService {
     });
   }
 
-  checkPrenotazione(uuid: string, utenteId: number, authToken: string): Observable<CheckPrenotazioneResult> {
+  checkPrenotazione(uuid_door: string, utenteId: number, authToken: string): Observable<CheckPrenotazioneResult> {
     return this.http.post(
       `${this.apiUrl}/api/prenotazioni/check-prenotazione`,
       null,
       {
-        params: { uuid, utenteId: String(utenteId) },
+        params: { uuid_door, utenteId: String(utenteId) },
         headers: { authToken },
         observe: 'response',
         responseType: 'text'
