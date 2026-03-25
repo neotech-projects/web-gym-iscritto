@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PrenotazioneService } from '../../services/prenotazione.service';
 import { AuthService } from '../../services/auth.service';
+import { formatBookingTime } from '../../utils/format-booking-time';
 
 @Component({
   selector: 'app-dashboard',
@@ -152,18 +153,7 @@ export class DashboardComponent implements OnInit {
   }
 
   formatOrario(oraInizio: string): string {
-    if (!oraInizio) return '–';
-    const t = (oraInizio + '').trim();
-    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return t.substring(0, 5);
-    try {
-      const d = new Date(t);
-      if (!isNaN(d.getTime())) {
-        const h = d.getHours().toString().padStart(2, '0');
-        const m = d.getMinutes().toString().padStart(2, '0');
-        return `${h}:${m}`;
-      }
-    } catch { }
-    return t;
+    return formatBookingTime(oraInizio);
   }
 
   getOrario(prenotazione: any): string {

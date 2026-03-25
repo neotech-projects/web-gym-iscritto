@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PrenotazioneService, Prenotazione } from '../../services/prenotazione.service';
 import { AuthService } from '../../services/auth.service';
+import { formatBookingTime } from '../../utils/format-booking-time';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -85,14 +86,7 @@ export class LeMiePrenotazioniComponent implements OnInit {
   }
 
   formatOrario(ora: string | undefined): string {
-    if (!ora) return '–';
-    const t = (ora + '').trim();
-    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return t.substring(0, 5);
-    try {
-      const d = new Date(t);
-      if (!isNaN(d.getTime())) return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-    } catch { }
-    return t;
+    return formatBookingTime(ora);
   }
 
   getOrario(booking: Prenotazione): string {

@@ -4,6 +4,7 @@ import { forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { PrenotazioneService, PrenotazioneGenerale, Prenotazione } from '../../services/prenotazione.service';
 import { AuthService } from '../../services/auth.service';
+import { parseBackendTimeToHms } from '../../utils/format-booking-time';
 
 
 @Component({
@@ -91,13 +92,13 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     const dataStr = this.parseBackendDate(p.data);
     if (!dataStr) return null;
     const rawOra = p.oraInizio ?? (p as any).ora_inizio ?? '';
-    const startTimeStr = this.parseBackendTime(rawOra);
+    const startTimeStr = parseBackendTimeToHms(rawOra);
     if (!startTimeStr) return null;
     const start = new Date(`${dataStr}T${startTimeStr}`);
     if (isNaN(start.getTime())) return null;
     const min = p.durataMinuti ?? (p as any).durata_minuti;
     const rawFine = p.oraFine ?? (p as any).ora_fine ?? '';
-    const endTimeStr = rawFine ? this.parseBackendTime(rawFine) : null;
+    const endTimeStr = rawFine ? parseBackendTimeToHms(rawFine) : null;
     const end = endTimeStr
       ? new Date(`${dataStr}T${endTimeStr}`)
       : new Date(start.getTime() + (min ?? 60) * 60000);
@@ -134,25 +135,6 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     if (typeof data === 'number') {
       const d = new Date(data);
       if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
-    return null;
-  }
-
-  /** Normalizza ora dal backend in HH:mm:ss in ora locale (gestisce ISO tipo 1970-01-01T10:30:00.000Z). */
-  private parseBackendTime(ora: any): string | null {
-    if (ora == null || ora === '') return null;
-    const s = String(ora).trim();
-    if (s.includes('T')) {
-      const d = new Date(s);
-      if (isNaN(d.getTime())) return null;
-      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-    }
-    if (/^\d{1,2}:\d{1,2}/.test(s)) {
-      const parts = s.split(':');
-      const h = String(parseInt(parts[0], 10)).padStart(2, '0');
-      const m = String(parseInt(parts[1], 10) || 0).padStart(2, '0');
-      const sec = parts[2] != null ? String(parseInt(parts[2], 10) || 0).padStart(2, '0') : '00';
-      return `${h}:${m}:${sec}`;
     }
     return null;
   }

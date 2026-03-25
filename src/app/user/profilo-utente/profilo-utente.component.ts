@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService, User, ProfiloUtente } from '../../services/auth.service';
 import { PrenotazioneService, Prenotazione } from '../../services/prenotazione.service';
+import { formatBookingTime } from '../../utils/format-booking-time';
 
 declare var bootstrap: any;
 
@@ -306,14 +307,7 @@ export class ProfiloUtenteComponent implements OnInit {
   }
 
   formatOrario(ora: string | undefined): string {
-    if (!ora) return '–';
-    const t = (ora + '').trim();
-    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) return t.substring(0, 5);
-    try {
-      const d = new Date(t);
-      if (!isNaN(d.getTime())) return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-    } catch { }
-    return t;
+    return formatBookingTime(ora);
   }
 
   getOrario(p: Prenotazione): string {
