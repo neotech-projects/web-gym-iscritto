@@ -42,9 +42,15 @@ html:has(body.modal-open) {
   overscroll-behavior: none;
 }
 
-/* Riduce lo scroll “a catena” toccando il backdrop su touch */
-.modal-backdrop.show {
-  touch-action: none;
+/* Non usare touch-action:none sul backdrop: su iOS Safari può rendere la modale non interagibile */
+
+/* Stacking esplicito quando la modale è figlia di body (dopo lo spostamento in app.component) */
+body > .modal {
+  z-index: 1055;
+}
+
+.modal-backdrop {
+  z-index: 1050;
 }
 
 /* Stili responsive per mobile */
@@ -89,11 +95,28 @@ html:has(body.modal-open) {
   .page-title-box {
     flex-direction: column;
     align-items: flex-start !important;
+    /* Senza il titolo h4, il margine negativo del tema (-23px) taglia la prima riga (breadcrumb) sotto la topbar */
+    margin-top: 0 !important;
+    margin-left: -1.5rem !important;
+    margin-right: -1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    padding-top: 0.75rem !important;
+    overflow: visible !important;
+  }
+
+  /* Evita che la prima riga (breadcrumb) venga tagliata da overflow dei contenitori */
+  .page-content .container-fluid > .row:first-child {
+    overflow: visible !important;
+  }
+
+  .page-content .container-fluid > .row:first-child .col-12 {
+    overflow: visible !important;
   }
   
   .page-title-right {
     margin-top: 0;
     width: 100%;
+    overflow: visible !important;
   }
   
   /* Breadcrumb responsive */
