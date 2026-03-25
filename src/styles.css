@@ -27,6 +27,26 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/*
+ * Modali Bootstrap: blocca lo scroll della pagina.
+ * Le regole mobile sotto usano overflow-y
+ */
+body.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.modal-open,
+html:has(body.modal-open) {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+/* Riduce lo scroll “a catena” toccando il backdrop su touch */
+.modal-backdrop.show {
+  touch-action: none;
+}
+
 /* Stili responsive per mobile */
 @media (max-width: 767px) {
   /* Modali responsive */
@@ -72,7 +92,7 @@ body {
   }
   
   .page-title-right {
-    margin-top: 0.5rem;
+    margin-top: 0;
     width: 100%;
   }
   
