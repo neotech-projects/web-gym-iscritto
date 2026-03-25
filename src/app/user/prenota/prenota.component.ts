@@ -774,6 +774,75 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Riga tabella disponibilità giornaliera (modale): stesso markup per slot orari e slot uniti h:30–(h+1):30.
+   */
+  private buildDayAvailabilityTableRowHtml(
+    slotStart: Date,
+    slotEnd: Date,
+    isToday: boolean,
+    now: Date,
+    firstUserBookingStart: Date | null,
+    firstUserBookingEnd: Date | null
+  ): string | null {
+    const count = this.countBookingsInSlot(slotStart, slotEnd);
+    const isPastTime = isToday && slotStart < now;
+    let isFirstUserBooking = false;
+    if (firstUserBookingStart && firstUserBookingEnd) {
+      isFirstUserBooking = firstUserBookingStart < slotEnd && firstUserBookingEnd > slotStart;
+    }
+    if (count === 0 && !isFirstUserBooking) {
+      return null;
+    }
+    const displayCount = isFirstUserBooking && count === 0 ? 1 : count;
+
+    let badgeColor: string;
+    let statusText: string;
+    let actionButton: string;
+
+    if (isPastTime) {
+      badgeColor = '#6c757d';
+      statusText = this.isMobile() ? 'Passato' : 'Orario Passato';
+      const buttonText = this.isMobile() ? 'Non disp.' : 'Non disponibile';
+      actionButton = `<button class="btn btn-sm btn-secondary" disabled>${buttonText}</button>`;
+    } else if (displayCount >= this.MAX_CAPACITY) {
+      badgeColor = '#f06548';
+      statusText = 'Occupato';
+      const buttonText = this.isMobile() ? 'Non disp.' : 'Non disponibile';
+      actionButton = `<button class="btn btn-sm btn-secondary" disabled>${buttonText}</button>`;
+    } else if (isFirstUserBooking) {
+      badgeColor = '#f7b84b';
+      statusText = 'Parzialmente Occupato';
+      const buttonText = this.isMobile() ? 'Già prenotato' : 'Hai già una prenotazione';
+      actionButton = `<button class="btn btn-sm btn-secondary" disabled>${buttonText}</button>`;
+    } else {
+      badgeColor = '#f7b84b';
+      statusText = 'Parzialmente Occupato';
+      actionButton = `<button class="btn btn-sm btn-success" onclick="window.selectTimeSlot('${slotStart.toISOString()}', '${slotEnd.toISOString()}')">Prenota</button>`;
+    }
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    // Per la propria prenotazione mostra inizio/fine reali (es. 45 min), non il finestra da 1h del merge
+    const timeStr =
+      isFirstUserBooking && firstUserBookingStart && firstUserBookingEnd
+        ? `${pad(firstUserBookingStart.getHours())}:${pad(firstUserBookingStart.getMinutes())} - ${pad(firstUserBookingEnd.getHours())}:${pad(firstUserBookingEnd.getMinutes())}`
+        : `${pad(slotStart.getHours())}:${pad(slotStart.getMinutes())} - ${pad(slotEnd.getHours())}:${pad(slotEnd.getMinutes())}`;
+
+    return `
+            <tr>
+              <td class="fw-semibold">${timeStr}</td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <span class="me-2" style="width: 15px; height: 15px; background-color: ${badgeColor}; display: inline-block; border-radius: 3px;"></span>
+                  <span>${displayCount}/${this.MAX_CAPACITY} ${this.isMobile() ? 'occ.' : 'occupato'}</span>
+                </div>
+              </td>
+              <td><span style="color: ${badgeColor}; font-weight: 500;">${statusText}</span></td>
+              <td>${actionButton}</td>
+            </tr>
+          `;
+  }
+
   private openBookingModalWithDayView(date: Date): void {
     const daySection = document.getElementById('dayAvailabilitySection');
     if (daySection) daySection.style.display = 'block';
@@ -802,69 +871,67 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       const firstUserBooking = userBookingsForDay.length > 0 ? userBookingsForDay[0] : null;
       const firstUserBookingStart = firstUserBooking ? new Date(firstUserBooking.start) : null;
       const firstUserBookingEnd = firstUserBooking ? new Date(firstUserBooking.end) : null;
-      
+
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      const day = d.getDate();
+
+      const hourRows: { hour: number; slotStart: Date; slotEnd: Date }[] = [];
       for (let hour = 6; hour < 23; hour++) {
-        const slotStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, 0, 0);
+        const slotStart = new Date(y, m, day, hour, 0, 0);
         const slotEnd = new Date(slotStart.getTime() + 60 * 60000);
         const count = this.countBookingsInSlot(slotStart, slotEnd);
-        const isPastTime = isToday && slotStart < now;
-        
-        // Controlla se questo slot corrisponde alla PRIMA prenotazione personale
-        // Solo quella verrà mostrata come "Già prenotato"
         let isFirstUserBooking = false;
         if (firstUserBookingStart && firstUserBookingEnd) {
           isFirstUserBooking = firstUserBookingStart < slotEnd && firstUserBookingEnd > slotStart;
         }
-        
-        // Mostra se c'è almeno una prenotazione OPPURE se è la prima prenotazione personale
         if (count > 0 || isFirstUserBooking) {
-          // Se è la prima prenotazione personale ma count è 0, assicurati che il conteggio sia almeno 1
-          const displayCount = isFirstUserBooking && count === 0 ? 1 : count;
-          
-          let badgeColor: string, statusText: string, actionButton: string;
-          
-          if (isPastTime) {
-            badgeColor = '#6c757d';
-            statusText = this.isMobile() ? 'Passato' : 'Orario Passato';
-            const buttonText = this.isMobile() ? 'Non disp.' : 'Non disponibile';
-            actionButton = `<button class="btn btn-sm btn-secondary" disabled>${buttonText}</button>`;
-          } else if (displayCount >= this.MAX_CAPACITY) {
-            badgeColor = '#f06548';
-            statusText = 'Occupato';
-            const buttonText = this.isMobile() ? 'Non disp.' : 'Non disponibile';
-            actionButton = `<button class="btn btn-sm btn-secondary" disabled>${buttonText}</button>`;
-          } else if (isFirstUserBooking) {
-            // Solo la prima prenotazione personale mostra "Già prenotato"
-            badgeColor = '#f7b84b';
-            statusText = 'Parzialmente Occupato';
-            const buttonText = this.isMobile() ? 'Già prenotato' : 'Hai già una prenotazione';
-            actionButton = `<button class="btn btn-sm btn-secondary" disabled>${buttonText}</button>`;
-          } else {
-            // Le altre prenotazioni personali vengono mostrate come disponibili per prenotare
-            badgeColor = '#f7b84b';
-            statusText = 'Parzialmente Occupato';
-            actionButton = `<button class="btn btn-sm btn-success" onclick="window.selectTimeSlot('${slotStart.toISOString()}', '${slotEnd.toISOString()}')">Prenota</button>`;
-          }
-          
-          const timeStr = `${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:00`;
-          
-          const row = `
-            <tr>
-              <td class="fw-semibold">${timeStr}</td>
-              <td>
-                <div class="d-flex align-items-center">
-                  <span class="me-2" style="width: 15px; height: 15px; background-color: ${badgeColor}; display: inline-block; border-radius: 3px;"></span>
-                  <span>${displayCount}/${this.MAX_CAPACITY} ${this.isMobile() ? 'occ.' : 'occupato'}</span>
-                </div>
-              </td>
-              <td><span style="color: ${badgeColor}; font-weight: 500;">${statusText}</span></td>
-              <td>${actionButton}</td>
-            </tr>
-          `;
-          
-          tableBody.innerHTML += row;
+          hourRows.push({ hour, slotStart, slotEnd });
         }
       }
+
+      const mergedSlots: { slotStart: Date; slotEnd: Date }[] = [];
+      for (let i = 0; i < hourRows.length; i++) {
+        const curr = hourRows[i];
+        const next = hourRows[i + 1];
+        if (next && next.hour === curr.hour + 1) {
+          const firstHalfStart = new Date(y, m, day, curr.hour, 0, 0);
+          const firstHalfEnd = new Date(y, m, day, curr.hour, 30, 0);
+          const leadEmpty = this.countBookingsInSlot(firstHalfStart, firstHalfEnd) === 0;
+
+          const tailStart = new Date(y, m, day, curr.hour + 1, 30, 0);
+          const tailEnd = new Date(y, m, day, curr.hour + 2, 0, 0);
+          const tailEmpty = this.countBookingsInSlot(tailStart, tailEnd) === 0;
+
+          const countCurr = this.countBookingsInSlot(curr.slotStart, curr.slotEnd);
+          const countNext = this.countBookingsInSlot(next.slotStart, next.slotEnd);
+
+          if (leadEmpty && tailEmpty && countCurr === countNext) {
+            const slotStart = new Date(y, m, day, curr.hour, 30, 0);
+            const slotEnd = new Date(slotStart.getTime() + 60 * 60000);
+            mergedSlots.push({ slotStart, slotEnd });
+            i++;
+            continue;
+          }
+        }
+        mergedSlots.push({ slotStart: curr.slotStart, slotEnd: curr.slotEnd });
+      }
+
+      const rowsHtml = mergedSlots
+        .map((slot) =>
+          this.buildDayAvailabilityTableRowHtml(
+            slot.slotStart,
+            slot.slotEnd,
+            isToday,
+            now,
+            firstUserBookingStart,
+            firstUserBookingEnd
+          )
+        )
+        .filter((html): html is string => html != null)
+        .join('');
+
+      tableBody.innerHTML = rowsHtml;
       
       if (tableBody.innerHTML === '') {
         tableBody.innerHTML = `
