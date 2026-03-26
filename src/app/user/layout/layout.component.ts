@@ -71,70 +71,14 @@ export class LayoutComponent implements OnInit, AfterViewInit {
     const bootstrap = (window as any).bootstrap;
     
     if (bootstrap && bootstrap.Dropdown) {
-      // Usa Bootstrap per inizializzare i dropdown
-      const notificationButton = document.getElementById('page-header-notifications-dropdown');
       const userButton = document.getElementById('page-header-user-dropdown');
       
-      if (notificationButton) {
-        new bootstrap.Dropdown(notificationButton, {
-          autoClose: true
-        });
-      }
       if (userButton) {
         new bootstrap.Dropdown(userButton, {
           autoClose: true
         });
       }
     } else {
-      // Fallback: inizializzazione manuale
-      const notificationButton = document.getElementById('page-header-notifications-dropdown');
-      if (notificationButton) {
-        notificationButton.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          // Chiudi tutti gli altri dropdown
-          document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-            if (menu !== notificationButton.nextElementSibling) {
-              menu.classList.remove('show');
-            }
-          });
-          document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => {
-            if (btn !== notificationButton) {
-              btn.setAttribute('aria-expanded', 'false');
-            }
-          });
-          
-          const dropdown = notificationButton.nextElementSibling as HTMLElement;
-          if (dropdown && dropdown.classList.contains('dropdown-menu')) {
-            const isOpen = dropdown.classList.contains('show');
-            dropdown.classList.toggle('show');
-            
-            // Gestione posizionamento su mobile
-            if (window.innerWidth <= 767.98) {
-              // Su mobile usa posizionamento fisso
-              dropdown.style.position = 'fixed';
-              dropdown.style.right = '10px';
-              dropdown.style.left = 'auto';
-              dropdown.style.top = '70px';
-              dropdown.style.width = 'calc(100vw - 20px)';
-              dropdown.style.maxWidth = '350px';
-              dropdown.style.zIndex = '1050';
-            } else {
-              // Su desktop usa posizionamento assoluto
-              dropdown.style.position = 'absolute';
-              dropdown.style.right = '0';
-              dropdown.style.left = 'auto';
-              dropdown.style.top = 'auto';
-              dropdown.style.width = 'auto';
-              dropdown.style.maxWidth = '22rem';
-            }
-            
-            notificationButton.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
-          }
-        });
-      }
-
       const userButton = document.getElementById('page-header-user-dropdown');
       if (userButton) {
         userButton.addEventListener('click', (e) => {

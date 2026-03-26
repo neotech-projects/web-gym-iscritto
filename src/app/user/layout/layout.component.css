@@ -195,18 +195,8 @@
 }
 
 /* Stili per i dropdown dell'header */
-.topbar-head-dropdown,
 .topbar-user {
     position: relative !important;
-}
-
-.topbar-head-dropdown .dropdown-menu {
-    position: absolute !important;
-    right: 0 !important;
-    left: auto !important;
-    transform: none !important;
-    margin-top: 0.5rem !important;
-    min-width: 22rem !important;
 }
 
 .topbar-user .dropdown-menu {
@@ -215,6 +205,18 @@
     left: auto !important;
     transform: none !important;
     margin-top: 0.5rem !important;
+}
+
+/* Icona profilo visibile sotto breakpoint xl: touch target e allineamento */
+@media (max-width: 1199.98px) {
+    .topbar-user .mobile-user-icon {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        min-width: 38px !important;
+        min-height: 38px !important;
+    }
 }
 
 /* Assicura che i dropdown siano posizionati correttamente */
@@ -231,9 +233,9 @@
     left: auto !important;
 }
 
-/* Stili specifici per mobile - Badge e Dropdown Notifiche */
+/* Stili specifici per mobile - header e dropdown */
 @media (max-width: 767.98px) {
-    /* IMPORTANTE: Rimuovi overflow hidden e aggiungi padding a destra per il badge */
+    /* IMPORTANTE: Rimuovi overflow hidden e aggiungi padding a destra */
     .navbar-header {
         padding: 0 1rem 0 0.5rem !important;
         overflow: visible !important;
@@ -279,12 +281,6 @@
         margin-right: 0 !important;
     }
     
-    /* Riduci il margin del dropdown notifiche */
-    .topbar-head-dropdown {
-        margin-left: 0.25rem !important;
-        margin-right: 0 !important;
-    }
-    
     /* Riduci il margin del dropdown profilo */
     .topbar-user {
         margin-left: 0.25rem !important;
@@ -315,70 +311,6 @@
         }
     }
     
-    /* Fix per il badge delle notifiche su mobile - posizionamento interno */
-    .topbar-head-dropdown .btn-topbar {
-        position: relative !important;
-        overflow: visible !important;
-    }
-    
-    .topbar-head-dropdown .topbar-badge {
-        position: absolute !important;
-        left: auto !important;
-        right: 2px !important;
-        top: 2px !important;
-        transform: none !important;
-        z-index: 10 !important;
-        min-width: 16px !important;
-        height: 16px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0 3px !important;
-        font-size: 9px !important;
-        line-height: 1 !important;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
-    }
-    
-    /* Fix per il dropdown delle notifiche su mobile */
-    .topbar-head-dropdown {
-        position: relative !important;
-    }
-    
-    .topbar-head-dropdown .dropdown-menu {
-        position: fixed !important;
-        right: 10px !important;
-        left: auto !important;
-        top: 70px !important;
-        width: calc(100vw - 20px) !important;
-        max-width: 350px !important;
-        min-width: auto !important;
-        transform: none !important;
-        margin-top: 0 !important;
-        z-index: 1050 !important;
-        max-height: calc(100vh - 90px) !important;
-        overflow-y: auto !important;
-    }
-    
-    /* Assicura che il dropdown sia visibile sopra altri elementi */
-    .topbar-head-dropdown .dropdown-menu.show {
-        display: block !important;
-        position: fixed !important;
-        right: 10px !important;
-        left: auto !important;
-        top: 70px !important;
-    }
-    
-    /* Fix per il pulsante delle notifiche su mobile */
-    #page-header-notifications-dropdown {
-        position: relative !important;
-        z-index: 1051 !important;
-    }
-    
-    /* Assicura che il badge non venga tagliato */
-    .topbar-head-dropdown .btn-icon {
-        overflow: visible !important;
-    }
-    
     /* Assicura che il container dell'header non tagli elementi */
     .navbar-header > .d-flex:first-child {
         flex-shrink: 1 !important;
@@ -393,7 +325,6 @@
     }
     
     /* Assicura che i dropdown containers permettano overflow */
-    .topbar-head-dropdown,
     .topbar-user {
         overflow: visible !important;
     }
@@ -438,12 +369,6 @@
     
     body {
         overflow-x: visible !important;
-    }
-    
-    /* Fix specifico per il badge - posizionalo meglio */
-    .topbar-head-dropdown {
-        padding-right: 0 !important;
-        margin-right: 0 !important;
     }
     
     /* Fix per il footer su mobile - allungalo e assicurati che sia nel flusso */
