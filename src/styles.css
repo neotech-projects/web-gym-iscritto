@@ -49,8 +49,26 @@ body > .modal {
   z-index: 1055;
 }
 
+/*
+ * Safari iOS: 100vh da solo non coincide sempre con l’area visibile (barra indirizzi).
+ * inset:0 + min-height a catena evita strisce scoperte sul backdrop.
+ */
 .modal-backdrop {
   z-index: 1050;
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
+body > .modal.show,
+body > .modal.fade.show {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
 /* Stili responsive per mobile */

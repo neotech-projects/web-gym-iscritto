@@ -379,7 +379,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     today.setHours(0, 0, 0, 0);
     
     if (clickedDate < today) {
-      alert('⚠️ Non è possibile prenotare per giorni passati.\n\nSeleziona una data odierna o futura.');
+      this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per giorni passati.\n\nSeleziona una data odierna o futura.');
       return;
     }
     
@@ -405,7 +405,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     today.setHours(0, 0, 0, 0);
     
     if (selectedDate < today) {
-      alert('⚠️ Non è possibile prenotare per giorni passati.');
+      this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per giorni passati.');
       this.calendar.unselect();
       return;
     }
@@ -413,7 +413,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     if (selectedDate.getTime() === today.getTime()) {
       const now = new Date();
       if (info.start < now) {
-        alert('⚠️ Non è possibile prenotare per orari passati.');
+        this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per orari passati.');
         this.calendar.unselect();
         return;
       }
@@ -423,7 +423,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.calendar.view.type !== 'dayGridMonth') {
       // Controlla se l'utente ha già una prenotazione in questo orario
       if (this.hasUserBookingInSlot(info.start, info.end)) {
-        alert('⚠️ Hai già una prenotazione personale in questo orario.\n\nNon puoi prenotare nuovamente lo stesso slot temporale.');
+        this.showAppMessage('Attenzione', '⚠️ Hai già una prenotazione personale in questo orario.\n\nNon puoi prenotare nuovamente lo stesso slot temporale.');
         this.calendar.unselect();
         return;
       }
@@ -432,7 +432,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       const maxCount = this.checkAvailabilityForPeriod(info.start, info.end);
       
       if (maxCount >= this.MAX_CAPACITY) {
-        alert('⚠️ Spiacenti, la palestra è al completo per questo orario.\n\nCapacità massima: 10 persone\nPrenotazioni attuali: ' + maxCount + '\n\nProva a selezionare un altro orario.');
+        this.showAppMessage('Attenzione', '⚠️ Spiacenti, la palestra è al completo per questo orario.\n\nCapacità massima: 10 persone\nPrenotazioni attuali: ' + maxCount + '\n\nProva a selezionare un altro orario.');
         this.calendar.unselect();
         return;
       }
@@ -661,6 +661,18 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     this.updateAvailabilityInfo(currentOccupancy);
     
     this.showModal('bookingModal');
+  }
+
+  private showAppMessage(title: string, message: string): void {
+    const titleEl = document.getElementById('appMessageModalTitle');
+    const bodyEl = document.getElementById('appMessageModalBody');
+    if (titleEl) {
+      titleEl.textContent = title;
+    }
+    if (bodyEl) {
+      bodyEl.textContent = message;
+    }
+    this.showModal('appMessageModal');
   }
 
   private showModal(modalId: string): void {
@@ -983,20 +995,20 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     today.setHours(0, 0, 0, 0);
     
     if (selectedDate < today) {
-      alert('⚠️ Non è possibile prenotare per giorni passati.\n\nSeleziona una data odierna o futura.');
+      this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per giorni passati.\n\nSeleziona una data odierna o futura.');
       return;
     }
     
     if (selectedDate.getTime() === today.getTime()) {
       const now = new Date();
       if (start < now) {
-        alert('⚠️ Non è possibile prenotare per orari passati.\n\nSeleziona un orario futuro.');
+        this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per orari passati.\n\nSeleziona un orario futuro.');
         return;
       }
     }
     
     if (this.hasUserBookingInSlot(start, end)) {
-      alert('⚠️ Hai già una prenotazione personale in questo orario.\n\nNon puoi prenotare nuovamente lo stesso slot temporale.');
+      this.showAppMessage('Attenzione', '⚠️ Hai già una prenotazione personale in questo orario.\n\nNon puoi prenotare nuovamente lo stesso slot temporale.');
       return;
     }
     
@@ -1064,7 +1076,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     const endTime = endTimeInput?.value || this.bookingForm.get('endTime')?.value || '';
     
     if (!date || !startTime || !endTime) {
-      alert('Per favore compila tutti i campi!');
+      this.showAppMessage('Attenzione', 'Per favore compila tutti i campi!');
       return;
     }
     
@@ -1077,14 +1089,14 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     today.setHours(0, 0, 0, 0);
     
     if (selectedDate < today) {
-      alert('⚠️ Non è possibile prenotare per giorni passati.');
+      this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per giorni passati.');
       return;
     }
     
     if (selectedDate.getTime() === today.getTime()) {
       const now = new Date();
       if (start < now) {
-        alert('⚠️ Non è possibile prenotare per orari passati.');
+        this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per orari passati.');
         return;
       }
     }
@@ -1092,40 +1104,40 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
     const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
     
     if (durationMinutes < 30) {
-      alert('La durata minima della prenotazione è 30 minuti!');
+      this.showAppMessage('Attenzione', 'La durata minima della prenotazione è 30 minuti!');
       return;
     }
     
     if (durationMinutes > 60) {
-      alert('La durata massima della prenotazione è 1 ora!');
+      this.showAppMessage('Attenzione', 'La durata massima della prenotazione è 1 ora!');
       return;
     }
     
     if (end <= start) {
-      alert('L\'orario di fine deve essere successivo all\'orario di inizio!');
+      this.showAppMessage('Attenzione', 'L\'orario di fine deve essere successivo all\'orario di inizio!');
       return;
     }
     
     // Controlla se l'utente ha già una prenotazione futura attiva
     if (this.hasActiveFutureBooking()) {
-      alert('⚠️ Hai già una prenotazione attiva. Puoi prenotare di nuovo solo dopo che la prenotazione corrente è scaduta.');
+      this.showAppMessage('Attenzione', '⚠️ Hai già una prenotazione attiva. Puoi prenotare di nuovo solo dopo che la prenotazione corrente è scaduta.');
       return;
     }
     
     if (this.hasUserBookingInSlot(start, end)) {
-      alert('⚠️ Hai già una prenotazione personale in questo orario.');
+      this.showAppMessage('Attenzione', '⚠️ Hai già una prenotazione personale in questo orario.');
       return;
     }
     
     const finalCheck = this.checkAvailabilityForPeriod(start, end);
     if (finalCheck >= this.MAX_CAPACITY) {
-      alert('⚠️ Spiacenti, la palestra è diventata al completo per questo orario.');
+      this.showAppMessage('Attenzione', '⚠️ Spiacenti, la palestra è diventata al completo per questo orario.');
       return;
     }
 
     const utenteId = this.authService.getCurrentUser()?.id;
     if (utenteId == null) {
-      alert('Sessione non valida. Effettua di nuovo l\'accesso.');
+      this.showAppMessage('Attenzione', 'Sessione non valida. Effettua di nuovo l\'accesso.');
       return;
     }
 
@@ -1155,11 +1167,11 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         }
         this.loadBookings();
-        alert(`✓ Prenotazione confermata!\n\nData: ${new Date(date).toLocaleDateString('it-IT')}\nOrario: ${startTime} - ${endTime}`);
+        this.showAppMessage('Conferma', `✓ Prenotazione confermata!\n\nData: ${new Date(date).toLocaleDateString('it-IT')}\nOrario: ${startTime} - ${endTime}`);
       },
       error: (err) => {
         const msg = err?.error?.message || err?.message || err?.statusText || 'Errore di rete';
-        alert('Errore durante la prenotazione: ' + msg);
+        this.showAppMessage('Errore', 'Errore durante la prenotazione: ' + msg);
       }
     });
   }
@@ -1230,10 +1242,10 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
           const modal = Bootstrap ? Bootstrap.Modal.getInstance(modalElement) : null;
           if (modal) modal.hide();
         }
-        alert('Prenotazione cancellata con successo!');
+        this.showAppMessage('Conferma', 'Prenotazione cancellata con successo!');
         this.currentViewingEvent = null;
       },
-      error: () => alert('Errore durante la cancellazione della prenotazione.')
+      error: () => this.showAppMessage('Errore', 'Errore durante la cancellazione della prenotazione.')
     });
   }
 
@@ -1345,7 +1357,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
         today.setHours(0, 0, 0, 0);
         
         if (selectedDate < today) {
-          alert('⚠️ Non è possibile prenotare per giorni passati.\n\nLa data è stata reimpostata a oggi.');
+          this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per giorni passati.\n\nLa data è stata reimpostata a oggi.');
           const todayISO = today.toISOString().split('T')[0];
           bookingDateInput.value = todayISO;
           this.bookingForm.patchValue({ date: todayISO });
@@ -1370,7 +1382,7 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
           selectedTime.setHours(parseInt(hours || '0'), parseInt(minutes || '0'), 0, 0);
           
           if (selectedTime < now) {
-            alert('⚠️ Non è possibile prenotare per orari passati.\n\nSeleziona un orario futuro.');
+            this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per orari passati.\n\nSeleziona un orario futuro.');
             bookingStartTimeInput.value = '';
             this.bookingForm.patchValue({ startTime: '' });
           }
@@ -1409,6 +1421,19 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       closeButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           this.closeModal('viewBookingModal');
+        });
+      });
+    }
+
+    const appMessageModalElement = document.getElementById('appMessageModal');
+    if (appMessageModalElement) {
+      appMessageModalElement.addEventListener('hidden.bs.modal', () => {
+        this.cleanupModal();
+      });
+      const closeButtons = appMessageModalElement.querySelectorAll('[data-bs-dismiss="modal"], .btn-close');
+      closeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.closeModal('appMessageModal');
         });
       });
     }
