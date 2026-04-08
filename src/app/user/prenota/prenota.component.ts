@@ -1365,22 +1365,25 @@ export class PrenotaComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     }
     
-    // Validazione dinamica dell'orario per la data odierna
+    // Orario inizio: blur invece di change — su iOS Safari, change su input type="time"
+    // può scattare all'apertura del picker con un orario provvisorio (es. 00:00).
     const bookingStartTimeInput = document.getElementById('bookingStartTime') as HTMLInputElement;
     if (bookingStartTimeInput) {
-      bookingStartTimeInput.addEventListener('change', () => {
+      bookingStartTimeInput.addEventListener('blur', () => {
+        const raw = bookingStartTimeInput.value?.trim();
+        if (!raw) return;
+
         const selectedDate = new Date(bookingDateInput?.value || '');
         selectedDate.setHours(0, 0, 0, 0);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
-        // Se la data è oggi, controlla che l'orario non sia nel passato
+
         if (selectedDate.getTime() === today.getTime()) {
           const now = new Date();
-          const [hours, minutes] = bookingStartTimeInput.value.split(':');
+          const [hours, minutes] = raw.split(':');
           const selectedTime = new Date();
-          selectedTime.setHours(parseInt(hours || '0'), parseInt(minutes || '0'), 0, 0);
-          
+          selectedTime.setHours(parseInt(hours || '0', 10), parseInt(minutes || '0', 10), 0, 0);
+
           if (selectedTime < now) {
             this.showAppMessage('Attenzione', '⚠️ Non è possibile prenotare per orari passati.\n\nSeleziona un orario futuro.');
             bookingStartTimeInput.value = '';

@@ -49,14 +49,35 @@ export class AuthService {
     this.loadUserFromStorage();
   }
 
+  /** Legge entrambe le chiavi; preferisce `auth_token`, altrimenti `authToken` (come accesso-porta). */
+  private readStoredToken(): string | null {
+    const fromPrimary = localStorage.getItem(this.TOKEN_KEY)?.trim() ?? '';
+    const fromAlt = localStorage.getItem(this.AUTH_TOKEN_KEY)?.trim() ?? '';
+    if (fromPrimary) return fromPrimary;
+    if (fromAlt) return fromAlt;
+    return null;
+  }
+
+  /** Allinea le due chiavi se ne manca una (stesso valore). */
+  private syncAuthTokensIfNeeded(): void {
+    const t = this.readStoredToken();
+    if (!t) return;
+    if (!localStorage.getItem(this.TOKEN_KEY)?.trim()) {
+      localStorage.setItem(this.TOKEN_KEY, t);
+    }
+    if (!localStorage.getItem(this.AUTH_TOKEN_KEY)?.trim()) {
+      localStorage.setItem(this.AUTH_TOKEN_KEY, t);
+    }
+  }
+
   private loadUserFromStorage(): void {
+    this.syncAuthTokensIfNeeded();
     const savedUser = localStorage.getItem(this.USER_KEY);
     if (savedUser) {
       try {
         this.currentUser = JSON.parse(savedUser);
-        const token = localStorage.getItem(this.TOKEN_KEY);
+        const token = this.readStoredToken();
         if (this.currentUser?.id != null && token) {
-          localStorage.setItem(this.AUTH_TOKEN_KEY, token);
           localStorage.setItem(this.UTENTE_ID_KEY, String(this.currentUser.id));
         }
       } catch {
@@ -105,9 +126,11 @@ export class AuthService {
     return this.hasValidAuth();
   }
 
-  /** Controllo stretto: token e utente (con id) devono essere presenti in localStorage. */
+  /** Token (una delle due chiavi) + `current_user` con id — allineato a interceptor e accesso-porta. */
   hasValidAuth(): boolean {
-    const token = localStorage.getItem(this.TOKEN_KEY);
+    this.loadUserFromStorage();
+    this.syncAuthTokensIfNeeded();
+    const token = this.readStoredToken();
     const userJson = localStorage.getItem(this.USER_KEY);
     if (!token || !userJson) return false;
     try {
@@ -126,7 +149,9 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    this.loadUserFromStorage();
+    this.syncAuthTokensIfNeeded();
+    return this.readStoredToken();
   }
 
   /** Pulisce auth e reindirizza al login. Usato da guard e interceptor quando i dati non sono validi. */
