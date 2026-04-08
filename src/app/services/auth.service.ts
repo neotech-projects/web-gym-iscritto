@@ -49,23 +49,14 @@ export class AuthService {
     this.loadUserFromStorage();
   }
 
-  private readStoredToken(): string | null {
-    const a = localStorage.getItem(this.TOKEN_KEY)?.trim() ?? '';
-    const b = localStorage.getItem(this.AUTH_TOKEN_KEY)?.trim() ?? '';
-    if (a) return a;
-    if (b) return b;
-    return null;
-  }
-
   private loadUserFromStorage(): void {
     const savedUser = localStorage.getItem(this.USER_KEY);
     if (savedUser) {
       try {
         this.currentUser = JSON.parse(savedUser);
-        const token = this.readStoredToken();
+        const token = localStorage.getItem(this.TOKEN_KEY);
         if (this.currentUser?.id != null && token) {
           localStorage.setItem(this.AUTH_TOKEN_KEY, token);
-          localStorage.setItem(this.TOKEN_KEY, token);
           localStorage.setItem(this.UTENTE_ID_KEY, String(this.currentUser.id));
         }
       } catch {
@@ -73,22 +64,6 @@ export class AuthService {
       }
     } else {
       this.currentUser = null;
-    }
-    if (!this.currentUser) {
-      const token = this.readStoredToken();
-      const rawUid = localStorage.getItem(this.UTENTE_ID_KEY);
-      if (token && rawUid?.trim()) {
-        const n = Number(rawUid);
-        if (Number.isFinite(n)) {
-          this.currentUser = {
-            id: n,
-            username: '',
-            email: '',
-            nome: '',
-            cognome: ''
-          };
-        }
-      }
     }
   }
 
@@ -130,12 +105,19 @@ export class AuthService {
     return this.hasValidAuth();
   }
 
-  /** Stessi dati che servono ad accesso-porta: token (auth_token o authToken) + id (current_user o utenteId). */
+    /** Controllo stretto: token e utente (con id) devono essere presenti in localStorage. */
   hasValidAuth(): boolean {
-    this.loadUserFromStorage();
-    const token = this.readStoredToken();
-    if (!token) return false;
-    return this.currentUser != null && this.currentUser.id != null;
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    const userJson = localStorage.getItem(this.USER_KEY);
+    if (!token || !userJson) return false;
+    try {
+      const user = JSON.parse(userJson) as User;
+      if (user == null || (user as any).id == null) return false;
+      if (!this.currentUser) this.currentUser = user;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getCurrentUser(): User | null {
@@ -144,8 +126,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    this.loadUserFromStorage();
-    return this.readStoredToken();
+    return localStorage.getItem(this.TOKEN_KEY);
   }
 
   /** Pulisce auth e reindirizza al login. Usato da guard e interceptor quando i dati non sono validi. */
