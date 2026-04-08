@@ -19,8 +19,9 @@ export class AuthInterceptor implements HttpInterceptor {
     const isOurApi = url.startsWith(environment.apiUrl);
     const isLogin = url.includes('/api/utenti/login');
     const isRegister = url.includes('/auth/register');
+    const isCheckPrenotazione = url.includes('/api/prenotazioni/check-prenotazione');
 
-    if (!isOurApi || isLogin || isRegister) {
+    if (!isOurApi || isLogin || isRegister || isCheckPrenotazione) {
       return next.handle(request);
     }
 

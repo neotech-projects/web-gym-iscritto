@@ -90,10 +90,21 @@ export class AccessoPortaComponent implements OnInit {
     });
   }
 
-  /** Allineato a guard/interceptor: solo `auth_token` + `current_user` tramite AuthService. */
+  /**
+   * AuthService + chiavi `utenteId` / `authToken` (scritte al login).
+   * L’interceptor non blocca `check-prenotazione`, ma così la pagina ha sempre i valori giusti.
+   */
   private readUtenteIdAndAuthTokenFromStorage(): { utenteId: number | null; authToken: string | null } {
-    const utenteId = this.authService.getCurrentUser()?.id ?? null;
-    const authToken = this.authService.getToken();
+    let utenteId = this.authService.getCurrentUser()?.id ?? null;
+    if (utenteId == null) {
+      const raw = localStorage.getItem('utenteId');
+      if (raw?.trim()) {
+        const n = Number(raw);
+        if (Number.isFinite(n)) utenteId = n;
+      }
+    }
+    const authToken =
+      this.authService.getToken() ?? localStorage.getItem('authToken')?.trim() ?? null;
     return { utenteId, authToken };
   }
 
