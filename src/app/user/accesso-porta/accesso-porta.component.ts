@@ -44,7 +44,7 @@ export class AccessoPortaComponent implements OnInit {
         return;
       }
 
-      // Arrivo con solo uuid (scansione QR): legge utenteId e authToken da localStorage, poi check API
+      // Arrivo con solo uuid (scansione QR): stessa sessione del resto dell'app (AuthService), poi check API
       if (uuid_door) {
         const { utenteId, authToken } = this.readUtenteIdAndAuthTokenFromStorage();
         if (utenteId == null) {
@@ -90,28 +90,10 @@ export class AccessoPortaComponent implements OnInit {
     });
   }
 
-  /**
-   * utenteId e authToken da localStorage (chiavi `utenteId`, `authToken`);
-   * se mancanti, fallback su sessione AuthService (auth_token / current_user).
-   */
+  /** Allineato a guard/interceptor: solo `auth_token` + `current_user` tramite AuthService. */
   private readUtenteIdAndAuthTokenFromStorage(): { utenteId: number | null; authToken: string | null } {
-    const rawUid = localStorage.getItem('utenteId');
-    const rawToken = localStorage.getItem('authToken');
-
-    let utenteId: number | null = null;
-    if (rawUid != null && String(rawUid).trim() !== '') {
-      const n = Number(rawUid);
-      utenteId = Number.isFinite(n) ? n : null;
-    }
-    if (utenteId == null) {
-      utenteId = this.authService.getCurrentUser()?.id ?? null;
-    }
-
-    const authToken =
-      rawToken != null && String(rawToken).trim() !== ''
-        ? rawToken.trim()
-        : this.authService.getToken();
-
+    const utenteId = this.authService.getCurrentUser()?.id ?? null;
+    const authToken = this.authService.getToken();
     return { utenteId, authToken };
   }
 
