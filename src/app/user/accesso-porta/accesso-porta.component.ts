@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PrenotazioneService } from '../../services/prenotazione.service';
@@ -44,26 +45,10 @@ export class AccessoPortaComponent implements OnInit {
         return;
       }
 
-      // Arrivo con solo uuid (scansione QR): stessa sessione del resto dell'app (AuthService), poi check API
+      // Arrivo con solo uuid: header authToken e/o cookie di sessione (withCredentials)
       if (uuid_door) {
         const { utenteId, authToken } = this.readUtenteIdAndAuthTokenFromStorage();
-        if (utenteId == null) {
-          this.state = 'no-user';
-          this.message = 'Effettua il login per verificare l\'accesso.';
-          this.badgeClass = 'badge-warning';
-          this.badgeText = 'ACCESSO NEGATO';
-          this.imagePath = 'assets/images/portachiusa.png';
-          return;
-        }
         this.state = 'loading';
-        if (!authToken) {
-          this.state = 'no-user';
-          this.message = 'Sessione scaduta. Effettua nuovamente il login.';
-          this.badgeClass = 'badge-warning';
-          this.badgeText = 'ACCESSO NEGATO';
-          this.imagePath = 'assets/images/portachiusa.png';
-          return;
-        }
         this.prenotazioneService.checkPrenotazione(uuid_door, utenteId, authToken).subscribe({
           next: () => {
             this.state = 'result';
@@ -71,10 +56,24 @@ export class AccessoPortaComponent implements OnInit {
             this.messaggio = 'Porta aperta. Benvenuto in palestra!';
             this.applyResultView();
           },
-          error: (err: Error) => {
+          error: (err: unknown) => {
+            if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
+              this.state = 'no-user';
+              this.message = 'Effettua il login per verificare l\'accesso.';
+              this.badgeClass = 'badge-warning';
+              this.badgeText = 'ACCESSO NEGATO';
+              this.imagePath = 'assets/images/portachiusa.png';
+              return;
+            }
+            const msg =
+              err instanceof HttpErrorResponse && typeof err.error === 'string'
+                ? err.error.trim()
+                : err instanceof Error
+                  ? err.message
+                  : 'Errore di sistema';
             this.state = 'result';
             this.esito = 'ko';
-            this.messaggio = this.getMessageForError(err?.message);
+            this.messaggio = this.getMessageForError(msg);
             this.applyResultView();
           }
         });
@@ -104,7 +103,10 @@ export class AccessoPortaComponent implements OnInit {
       }
     }
     const authToken =
-      this.authService.getToken() ?? localStorage.getItem('authToken')?.trim() ?? null;
+      this.authService.getToken() ??
+      localStorage.getItem('authToken')?.trim() ??
+      localStorage.getItem('auth_token')?.trim() ??
+      null;
     return { utenteId, authToken };
   }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -70,15 +70,29 @@ export class PrenotazioneService {
     });
   }
 
-  checkPrenotazione(uuid_door: string, utenteId: number, authToken: string): Observable<CheckPrenotazioneResult> {
+  checkPrenotazione(
+    uuid_door: string,
+    utenteId: number | null,
+    authToken: string | null
+  ): Observable<CheckPrenotazioneResult> {
+    let params = new HttpParams().set('uuid_door', uuid_door);
+    if (utenteId != null) {
+      params = params.set('utenteId', String(utenteId));
+    }
+    let headers = new HttpHeaders();
+    const t = authToken?.trim();
+    if (t) {
+      headers = headers.set('authToken', t);
+    }
     return this.http.post(
       `${this.apiUrl}/api/prenotazioni/check-prenotazione`,
       null,
       {
-        params: { uuid_door, utenteId: String(utenteId) },
-        headers: { authToken },
+        params,
+        headers,
         observe: 'response',
-        responseType: 'text'
+        responseType: 'text',
+        withCredentials: true
       }
     ).pipe(
       map(res => {
@@ -87,12 +101,7 @@ export class PrenotazioneService {
         }
         throw new Error(res.body?.trim() || 'Errore di sistema');
       }),
-      catchError(err => {
-        const message = (typeof err.error === 'string' && err.error.trim())
-          ? err.error.trim()
-          : (err.message || 'Errore di sistema');
-        return throwError(() => new Error(message));
-      })
+      catchError(err => throwError(() => err))
     );
   }
 }

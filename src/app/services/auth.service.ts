@@ -69,7 +69,7 @@ export class AuthService {
 
   login(email: string, password: string, rememberMe: boolean = false): Observable<any> {
     const url = `${this.apiUrl}/api/utenti/login`;
-    return this.http.post<any>(url, { email, password }).pipe(
+    return this.http.post<any>(url, { email, password }, { withCredentials: true }).pipe(
       tap(response => {
         const token = response.token ?? response.accessToken ?? response.jwt;
         if (!token || !response.email) return;
