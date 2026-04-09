@@ -9,6 +9,11 @@ import { Observable, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
 
+function normalizeApiBase(base: string | undefined): string {
+  if (base == null || !base.trim()) return '';
+  return base.replace(/\/+$/, '');
+}
+
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
@@ -16,7 +21,9 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const url = request.url;
-    const isOurApi = url.startsWith(environment.apiUrl);
+    const baseRemote = normalizeApiBase(environment.apiServerUrl);
+    const isOurApi =
+      (baseRemote.length > 0 && url.startsWith(baseRemote));
     const isLogin = url.includes('/api/utenti/login');
     const isRegister = url.includes('/auth/register');
     const isCheckPrenotazione = url.includes('/api/prenotazioni/check-prenotazione');

@@ -13,7 +13,10 @@ import { AuthGuard } from './guards/auth.guard';
 const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
+  /** Stesso LoginComponent di `/login`; serve a `navigate(['/utenti/login'])` (allineato al naming API `/api/utenti/login`). */
+  { path: 'utenti/login', component: LoginComponent },
   { path: 'password-reset', component: PasswordResetComponent },
+  { path: 'accesso-porta/', redirectTo: 'accesso-porta', pathMatch: 'full' },
   { path: 'accesso-porta', component: AccessoPortaComponent },
   {
     path: '',
