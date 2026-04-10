@@ -11,7 +11,7 @@ import { ProfiloUtenteComponent } from './user/profilo-utente/profilo-utente.com
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   /** Stesso LoginComponent di `/login`; serve a `navigate(['/utenti/login'])` (allineato al naming API `/api/utenti/login`). */
   { path: 'utenti/login', component: LoginComponent },
