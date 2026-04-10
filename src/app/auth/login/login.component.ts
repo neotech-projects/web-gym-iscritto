@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent {
   email: string = '';
   password: string = '';
   rememberMe: boolean = false;
@@ -20,12 +20,6 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private authService: AuthService
   ) { }
-
-  ngOnInit(): void {
-    if (this.authService.hasValidAuth()) {
-      this.router.navigate(['/dashboard']);
-    }
-  }
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;

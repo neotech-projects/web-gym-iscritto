@@ -9,12 +9,13 @@ import { PrenotaComponent } from './user/prenota/prenota.component';
 import { LeMiePrenotazioniComponent } from './user/le-mie-prenotazioni/le-mie-prenotazioni.component';
 import { ProfiloUtenteComponent } from './user/profilo-utente/profilo-utente.component';
 import { AuthGuard } from './guards/auth.guard';
+import { guestGuard } from './guards/guest.guard';
 
 const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
+  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   /** Stesso LoginComponent di `/login`; serve a `navigate(['/utenti/login'])` (allineato al naming API `/api/utenti/login`). */
-  { path: 'utenti/login', component: LoginComponent },
+  { path: 'utenti/login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'password-reset', component: PasswordResetComponent },
   { path: 'accesso-porta/', redirectTo: 'accesso-porta', pathMatch: 'full' },
   { path: 'accesso-porta', component: AccessoPortaComponent },
