@@ -147,6 +147,9 @@ export class AccessoPortaComponent implements OnInit {
     if (msg.includes('uuid non valido') || msg.includes('uuid non può') || msg.includes('codice')) {
       return 'Codice non valido.';
     }
+    if (msg.includes('Shelly non pronto') || msg.includes('shelly')) {
+      return 'Impossibile aprire la porta: dispositivo Shelly non pronto.';
+    }
     return 'Accesso non autorizzato.';
   }
 
