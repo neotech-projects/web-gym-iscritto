@@ -150,7 +150,7 @@ export class AccessoPortaComponent implements OnInit {
     if (msg.includes('Shelly non pronto') || msg.includes('shelly')) {
       return 'Impossibile aprire la porta: dispositivo Shelly non pronto.';
     }
-    if (msg.includes('Orario della prenotazione scaduto')) {
+    if (msg.includes('Orario della prenotazione scaduto') || msg.includes('orario') || msg.includes('scaduto')){
       return 'Orario della prenotazione scaduto: il tempo prenotato è terminato.';
     }
     return 'Accesso non autorizzato.';
